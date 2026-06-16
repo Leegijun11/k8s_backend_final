@@ -1,15 +1,14 @@
 FROM python:3.11-slim
 
-WORKDIR /workspace
+# 작업 디렉토리를 /app으로 깔끔하게 설정
+WORKDIR /app
 
-# 1. requirements.txt 파일을 컨테이너 내부로 먼저 복사
+# 1. requirements.txt 복사 및 패키지 설치
 COPY requirements.txt .
-
-# 2. 복사한 파일을 기반으로 파이썬 패키지 설치
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 3. 백엔드 소스 코드를 컨테이너 내부로 복사
-COPY ./app /workspace/app
+# 2. backend 폴더 내부의 모든 파일(app 폴더 전체 포함)을 현재 작업 디렉토리(/app)로 복사
+COPY . .
 
-# 4. 서버 실행
+# 3. uvicorn이 실행할 때 현재 디렉토리 기준 'app.main:app'을 실행하도록 설정
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
