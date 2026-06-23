@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, UploadFile, File, BackgroundTasks
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.database import get_db, SessionLocal
+from app.db.database import get_db
 from datetime import datetime
 import uuid
 import os
@@ -17,40 +17,32 @@ AI_MODEL = load_inference_model()
 router=APIRouter(prefix='/babyimages', tags=['BabyImage'])
 
 
-def router_babyimages_ai_update_db(i_id: int, imagepath: str):
-    ai_result = predict_image(AI_MODEL, imagepath)
-    
-    with SessionLocal() as db:
-        try:
-            update_data = BabyImage_Update(i_label=ai_result)
-            
-            asyncio.run(
-                BabyImage_Service.services_babyimages_update(
-                    db=db, 
+async def run_ai_and_update_db(i_id: int, imagepath: str):
+    try:
+        ai_result = await run_in_threadpool(predict_image, AI_MODEL, imagepath)
+        
+        async for db_session in get_db():
+            try:
+                update_data = BabyImage_Update(i_label=ai_result)
+                
+                await BabyImage_Service.services_babyimages_update(
+                    db=db_session, 
                     i_id=i_id, 
                     babyimage=update_data
                 )
-            )
-            print(f"[AI 완료] 이미지 {i_id}번의 라벨을 '{ai_result}'로 업데이트했습니다.")
-        except Exception as e:
-            db.rollback()
-            print(f"[DB 업데이트 실패] {e}")
-
-
-
-async def run_ai_and_update_db(i_id: int, imagepath: str):
-    try:
-        await run_in_threadpool(router_babyimages_ai_update_db, i_id, imagepath)
-    except Exception as e:
-        print(f"[AI 백그라운드 오류 발생] {e}")
+                break
+            except Exception:
+                await db_session.rollback()
+    except Exception:
+        pass
 
 
 
 # POST 이미지 등록
 @router.post('/create', response_model=BabyImage_Read)
-async def router_babyimages_create(b_id: int,
+async def router_babyimages_create(background_tasks: BackgroundTasks,
+                                   b_id: int,
                                    file: UploadFile = File(...),
-                                   background_tasks: BackgroundTasks = Depends(),
                                    db: AsyncSession = Depends(get_db)):
     
     origin = os.path.splitext(file.filename)[1]

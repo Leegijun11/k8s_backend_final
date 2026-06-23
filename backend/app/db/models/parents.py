@@ -17,11 +17,11 @@ class Parent(Base):
     p_category: Mapped[str] = mapped_column(String(100), nullable=False)
     p_state: Mapped[str] = mapped_column(String(100), nullable=False)
 
-    g_id: Mapped[int] = mapped_column(ForeignKey('care_groups.g_id'), nullable=False)
+    g_id: Mapped[Optional[int]] = mapped_column(ForeignKey('care_groups.g_id'), nullable=True)
     u_id: Mapped[int] = mapped_column(ForeignKey('users.u_id'), nullable=False)
     
-    current_b_id: Mapped[Optional[int]] = mapped_column(ForeignKey('babies.b_id'), nullable=True)
+    current_b_id: Mapped[Optional[int]] = mapped_column(ForeignKey('babies.b_id', ondelete="SET NULL"), nullable=True)
 
-    care_group: Mapped["Care_Group"] = relationship("Care_Group", back_populates="members")
+    care_group: Mapped[Optional["Care_Group"]] = relationship("Care_Group", back_populates="members")
     user: Mapped["User"] = relationship("User", back_populates="subs")
     current_baby: Mapped[Optional["Baby"]] = relationship("Baby")

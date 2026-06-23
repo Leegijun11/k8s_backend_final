@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     refresh_token_expire_seconds:int = Field(604800, alias="REFRESH_TOKEN_EXPIRE")
 
     class Config:
-        env_file="../.env"
+        env_file = ["../../../.env","../../.env", "../.env", "./.env", ".env"]
         case_sensitive=True
         extra="allow"
         populate_by_name=True

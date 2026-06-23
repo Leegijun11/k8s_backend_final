@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from app.db.models.babycharacters import BabyCharacter
     from app.db.models.diaries import Diary
     from app.db.models.records import Record
-    from backend.app.db.models.babyimages import BabyImage
+    from app.db.models.babyimages import BabyImage
 
 class Baby(Base):
     __tablename__ = 'babies'
@@ -29,7 +29,7 @@ class Baby(Base):
     g_id: Mapped[int] = mapped_column(ForeignKey('care_groups.g_id'), nullable=False)
     
     care_group: Mapped["Care_Group"] = relationship("Care_Group", back_populates="babies")
-    character: Mapped[Optional["BabyCharacter"]] = relationship("BabyCharacter", back_populates="baby")
-    diaries: Mapped[List["Diary"]] = relationship("Diary", back_populates="baby")
-    record: Mapped["Record"] = relationship("Record", back_populates="baby")
-    images: Mapped["Image"] = relationship("Image", back_populates="baby")
+    character: Mapped[Optional["BabyCharacter"]] = relationship("BabyCharacter", back_populates="baby", cascade="all, delete-orphan")
+    diaries: Mapped[List["Diary"]] = relationship("Diary", back_populates="baby", cascade="all, delete-orphan")
+    record: Mapped[list["Record"]] = relationship("Record", back_populates="baby", cascade="all, delete-orphan")
+    images: Mapped[List["BabyImage"]] = relationship("BabyImage", back_populates="baby", cascade="all, delete-orphan")

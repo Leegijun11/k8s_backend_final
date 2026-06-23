@@ -1,8 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select, func
+from sqlalchemy import func
+from sqlalchemy.future import select
 from datetime import datetime
-from backend.app.db.models.babyimages import BabyImage 
-from backend.app.db.scheme.babyimages import BabyImage_Create, BabyImage_Update
+from app.db.models.babyimages import BabyImage 
+from app.db.scheme.babyimages import BabyImage_Create, BabyImage_Update
 
 
 class BabyImage_Crud:

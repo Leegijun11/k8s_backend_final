@@ -14,6 +14,6 @@ class Care_Group(Base):
     g_id: Mapped[int] = mapped_column(primary_key=True)
     creator_id: Mapped[int] = mapped_column(ForeignKey('users.u_id'), nullable=False)
     
-    members: Mapped[List["Parent"]] = relationship("Parent", back_populates="care_group")
-    babies: Mapped[List["Baby"]] = relationship("Baby", back_populates="care_group")
+    members: Mapped[List["Parent"]] = relationship("Parent", back_populates="care_group", cascade="all, delete-orphan")
+    babies: Mapped[List["Baby"]] = relationship("Baby", back_populates="care_group", cascade="all, delete-orphan")
     alarms: Mapped[List["Alarm"]] = relationship("Alarm", back_populates="care_group", cascade="all, delete-orphan")

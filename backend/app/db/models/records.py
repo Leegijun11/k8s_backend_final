@@ -18,6 +18,6 @@ class Record(Base):
     r_weight: Mapped[Decimal] = mapped_column(Numeric(precision=5, scale=2), nullable=False)
     r_date: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
     
-    b_id: Mapped[int] = mapped_column(ForeignKey('babies.b_id', ondelete="CASCADE"), nullable=False, unique=True)
+    b_id: Mapped[int] = mapped_column(ForeignKey('babies.b_id', ondelete="CASCADE"), nullable=False)
 
     baby: Mapped["Baby"] = relationship("Baby", back_populates="record")

@@ -27,6 +27,6 @@ class User(Base):
     refresh_token: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     
     subs: Mapped[List["Parent"]] = relationship("Parent", back_populates="user")
-    sent_alarms: Mapped[List["Alarm"]] = relationship("Alarm", back_populates="sender")
-    received_alarms: Mapped[List["Alarm"]] = relationship("Alarm", back_populates="receiver")
+    sent_alarms: Mapped[List["Alarm"]] = relationship("Alarm", foreign_keys="[Alarm.send_id]", back_populates="sender")
+    received_alarms: Mapped[List["Alarm"]] = relationship("Alarm", foreign_keys="[Alarm.receive_id]",  back_populates="receiver")
     
