@@ -38,13 +38,11 @@ class BabyService:
     @staticmethod
     async def service_babies_list(u_id:int, db:AsyncSession):
         try:
-            db_data=await Baby_Crud.crud_babies_list(u_id, db)
+            db_data=await Baby_Crud.crud_babies_list(db, u_id)
+            return db_data
         except Exception as e:
-            raise HTTPException(status_code=400, detail="{e} 아이들의 정보를 불러오는 중 서버 오류가 발생했습니다.")
-        if db_data is None:
-            raise HTTPException(status_code=404, detail="아이들의 정보를 찾을 수 없습니다.")
-        return db_data
-        
+            print(f"아미 목록 조회 에러 : {e}")
+            raise HTTPException(status_code=500, detail="아이들의 정보를 불러오는 중 서버 오류가 발생했습니다.")        
 
         
     # 3. 아이 세부 정보
