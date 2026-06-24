@@ -1,37 +1,59 @@
-from pydantic import BaseModel, Field, ConfigDict
-from datetime import datetime,timezone
-from typing import Annotated
+from pydantic import BaseModel, ConfigDict
+from datetime import date
+from typing import Optional
 
 
-class Diary_Base(BaseModel): 
-    d_title : str
-    d_content : str
-    d_label : str
-    d_eat: str | None = None
-    d_sleep: str | None = None 
-    d_toilet: str | None = None 
-    d_temp: str | None = None    
-    b_id : int
+class Diary_Create(BaseModel):
+    b_id: int
+    d_date: date
 
+
+class Diary_Read(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    d_id: int
+    d_title: str
+    d_content: str
+    d_label: Optional[str] = None
+    d_date: date
+    d_image: Optional[str] = None
+    d_eat: Optional[str] = None
+    d_sleep: Optional[str] = None
+    d_toilet: Optional[str] = None
+    d_temp: Optional[str] = None
+    b_id: int
 
-class Diary_Create(Diary_Base):
-    pass
+class Diary_List_Item(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
+    d_title: str
+    d_content: str
+    d_label: str
+    d_date: date
+    d_eat: Optional[str] = None
+    d_sleep: Optional[str] = None
+    d_toilet: Optional[str] = None
+    d_temp: Optional[str] = None
+
+
+
+class Diary_Detail(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    d_title: str
+    d_content: str
+    d_label: str
+    d_date: date
+    d_eat: Optional[str] = None
+    d_sleep: Optional[str] = None
+    d_toilet: Optional[str] = None
+    d_temp: Optional[str] = None
 
 class Diary_Update(BaseModel):
-    d_title: str | None = None   
-    d_content : str | None = None   
-    d_label: str | None = None   
-    d_eat: str | None = None
-    d_sleep: str | None = None 
-    d_toilet: str | None = None 
-    d_temp: str | None = None    
-
-    
-class Diary_Read(Diary_Base):
-    d_id: int
-    d_date : datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-
+    d_title: Optional[str] = None
+    d_content: Optional[str] = None
+    d_label: Optional[str] = None
+    d_eat: Optional[str] = None
+    d_sleep: Optional[str] = None
+    d_toilet: Optional[str] = None
+    d_temp: Optional[str] = None

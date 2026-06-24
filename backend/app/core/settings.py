@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     
     @property
     def db_url(self) -> str:
-        return f"mysql+asyncmy://{self.tmp_db}"
+        return f"mysql+aiomysql://{self.tmp_db}"
     
     @property
     def sync_db_url(self) -> str:
@@ -44,4 +44,3 @@ class Settings(BaseSettings):
 
 
 settings=Settings()
-
