@@ -18,6 +18,7 @@ class Record_Crud:
 
 
     # 아이 성장 정보들
+    @staticmethod
     async def crud_records_details(db: AsyncSession,
                                    b_id: int,
                                    start_date: datetime,

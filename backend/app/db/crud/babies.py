@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.db.models.babies import Baby 
+from app.db.models.care_group import Care_Group
 from app.db.scheme.babies import Baby_Create, Baby_Update
 
 
@@ -8,9 +9,8 @@ class Baby_Crud:
     # 아이 정보 등록
     @staticmethod
     async def crud_babies_create(db:AsyncSession, 
-                                 baby: Baby_Create) -> Baby:          
-        data = baby.model_dump()
-        db_data=Baby(**data)
+                                 baby_dict: dict) -> Baby:          
+        db_data = Baby(**baby_dict)
         db.add(db_data)
         await db.flush()
         return db_data
@@ -19,9 +19,10 @@ class Baby_Crud:
     # 아이 목록
     @staticmethod
     async def crud_babies_list(db:AsyncSession,
-                               g_id:int) -> Baby | None:
+                               u_id:int) -> list[Baby]:
         result = await db.execute(select(Baby)
-                                  .filter(Baby.g_id == g_id))
+                                  .join(Care_Group, Baby.g_id == Care_Group.g_id)
+                                  .filter(Care_Group.creator_id == u_id))
         return result.scalars().all()
 
 

@@ -1,15 +1,25 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from app.db.database import async_engine, Base
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import babyimages, users, tips, logs, parent, alarm, diaries,stories
+# DB 및 엔진
+from app.db.database import async_engine, Base
+
+# Models
+from app.db.models.alarms import Alarm
 from app.db.models.babies import Baby
 from app.db.models.babycharacters import BabyCharacter
 from app.db.models.care_group import Care_Group
 from app.db.models.diaries import Diary
+from app.db.models.parents import Parent
 from app.db.models.records import Record
 from app.db.models.stories import Story
+
+# Routers
+from app.routers import (
+    babyimages, babies, babycharacters, record, 
+    users, tips, logs, parent, alarm, diaries, stories
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -20,31 +30,30 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Backend API", lifespan=lifespan)
 
-# app.include_router(health.router)
-# app.include_router(items.router)
-
-@app.get("/")
-async def root():
-    return {"message": "home"}
-
-
-app.include_router(users.router)
-app.include_router(parent.router)
-app.include_router(tips.router)
-app.include_router(babyimages.router)
-app.include_router(logs.router)
-app.include_router(parent.router)
-app.include_router(alarm.router)
-app.include_router(diaries.router)
-app.include_router(stories.router)
-
+# CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+@app.get("/")
+async def root():
+    return {"message": "home"}
 
-#uvicorn main:app --reload
+# Router 등록
+app.include_router(users.router)
+app.include_router(parent.router)
+app.include_router(tips.router)
+app.include_router(babyimages.router)
+app.include_router(babies.router)
+app.include_router(babycharacters.router)
+app.include_router(record.router)
+app.include_router(logs.router)
+app.include_router(alarm.router)
+app.include_router(diaries.router)
+app.include_router(stories.router)
+
+# uvicorn main:app --reload
