@@ -11,7 +11,7 @@ class Alarm_Base(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class Alarm_Create(BaseModel):
+class Alarm_Create(Alarm_Base):
     pass
 
     
