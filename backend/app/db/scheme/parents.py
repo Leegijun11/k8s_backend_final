@@ -19,5 +19,6 @@ class Parent_Update(Parent_Base):
 
     
 class Parent_Read(Parent_Create):
+    p_id:int
     current_b_id : int
 

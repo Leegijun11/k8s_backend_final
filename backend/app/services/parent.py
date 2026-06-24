@@ -63,8 +63,9 @@ class Parent_Service:
 
             return [
                 {
+                    "p_id":member.p_id,
                     "u_name": user_name_map.get(member.u_id),
-                    "p_roll": member.p_role,
+                    "p_role": member.p_role,
                     "p_category": member.p_category,
                     "p_state": member.p_state
                 }
@@ -82,9 +83,9 @@ class Parent_Service:
 
     #양육자 삭제
     @staticmethod
-    async def service_parents_delete(db:AsyncSession, u_id:int):
+    async def service_parents_delete(db:AsyncSession, p_id:int):
         try:
-            query=select(Parent).where(Parent.u_id==u_id)
+            query=select(Parent).where(Parent.p_id==p_id)
             result=await db.execute(query)
             db_data=result.scalar_one_or_none()
 

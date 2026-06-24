@@ -11,14 +11,10 @@ class Alarm_Base(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class Alarm_Create(BaseModel):
-    send_id: int
-    receive_id: int
-    g_id: int
+class Alarm_Create(Alarm_Base):
+    pass
 
     
 class Alarm_Read(Alarm_Base):
     a_id: int
     a_created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-

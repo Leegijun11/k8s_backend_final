@@ -27,7 +27,7 @@ class Alarm_Crud:
 
     # 알람 삭제
     @staticmethod
-    async def crud_diaries_del(db:AsyncSession, 
+    async def crud_alarms_del(db:AsyncSession, 
                                a_id:int) -> Alarm | None:
         db_data = await db.get(Alarm, a_id)
         if db_data:
@@ -35,11 +35,11 @@ class Alarm_Crud:
             await db.flush()
             return db_data
         return None
-    
+
 
     # 수신자의 알람 전체 삭제 / 삭제 개수 반환
     @staticmethod
-    async def crud_diaries_del(db:AsyncSession, 
+    async def crud_alarms_all_del(db:AsyncSession, 
                                receive_id:int) -> int | None:
         query = select(Alarm).where(Alarm.receive_id == receive_id)
         result = await db.execute(query)

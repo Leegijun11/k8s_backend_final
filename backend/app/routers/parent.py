@@ -35,6 +35,6 @@ async def router_parents_list(
 #양육자 삭제
 @router.delete('/del')
 async def router_parents_delete(
-    u_id:int=Query(..., description="삭제할 유저 ID"),
+    p_id:int,
     db:AsyncSession=Depends(get_db)):
-    return await Parent_Service.service_parents_delete(db, u_id=u_id)
+    return await Parent_Service.service_parents_delete(db, p_id=p_id)
