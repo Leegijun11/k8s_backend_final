@@ -3,12 +3,13 @@ from contextlib import asynccontextmanager
 from app.db.database import async_engine, Base
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import babyimages, users, tips, logs, parent, alarm, diaries
+from app.routers import babyimages, users, tips, logs, parent, alarm, diaries,stories
 from app.db.models.babies import Baby
 from app.db.models.babycharacters import BabyCharacter
 from app.db.models.care_group import Care_Group
 from app.db.models.diaries import Diary
 from app.db.models.records import Record
+from app.db.models.stories import Story
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -35,6 +36,7 @@ app.include_router(logs.router)
 app.include_router(parent.router)
 app.include_router(alarm.router)
 app.include_router(diaries.router)
+app.include_router(stories.router)
 
 app.add_middleware(
     CORSMiddleware,

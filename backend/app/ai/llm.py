@@ -48,3 +48,40 @@ async def generate_diary_content(log: Log, images: list[BabyImage]) -> dict:
         raise ValueError(f"LLM 응답을 JSON으로 파싱하지 못했습니다: {e}\n원본 응답: {raw_text}")
 
     return result
+
+STORY_PROMPT = """\
+너는 아기의 성장 디지털북(스토리북)을 작성해주는 도우미야.
+아래는 아기의 여러 날짜에 걸친 일기 기록이야. 이 일기들을 시간 순서대로 엮어서,
+하나의 따뜻하고 연결된 성장 이야기로 재구성해줘. 각 날의 일기를 단순 나열하지 말고,
+하나의 짧은 동화/회고록처럼 자연스럽게 이어지는 글로 작성해줘.
+
+[일기 기록]
+{diary_summaries}
+
+다음 JSON 형식으로만 응답해. 다른 설명이나 코드블록 없이 순수 JSON만 출력해:
+{{
+  "s_name": "디지털북 제목 (짧고 감성적으로)",
+  "s_content": "전체 이야기 내용 (여러 문단 가능, 시간 흐름에 따라 자연스럽게 서술)"
+}}
+"""
+
+
+async def generate_story_content(diaries: list) -> dict:
+    diary_summaries = "\n".join([
+        f"- {d.d_date}: {d.d_title} | {d.d_content} (감정: {d.d_label})"
+        for d in diaries
+    ])
+
+    prompt = STORY_PROMPT.format(diary_summaries=diary_summaries)
+
+    response = await llm.ainvoke(prompt)
+    raw_text = response.content
+
+    cleaned = re.sub(r"^```(json)?|```$", "", raw_text.strip(), flags=re.MULTILINE).strip()
+
+    try:
+        result = json.loads(cleaned)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"LLM 응답을 JSON으로 파싱하지 못했습니다: {e}\n원본 응답: {raw_text}")
+
+    return result
