@@ -5,7 +5,6 @@ from app.db.database import get_db
 from datetime import datetime
 import uuid
 import os
-import asyncio
 
 from app.ai.predict import load_inference_model, predict_image
 
@@ -36,6 +35,47 @@ async def run_ai_and_update_db(i_id: int, imagepath: str):
     except Exception:
         pass
 
+
+@router.post('/multi_create', response_model=list[BabyImage_Read])
+async def router_babyimages_multi_create(background_tasks: BackgroundTasks,
+                                   b_id: int,
+                                   files: list[UploadFile] = File(...),
+                                   db: AsyncSession = Depends(get_db)):
+    
+    today_str = datetime.now().strftime("%Y%m%d")
+    imagefolder = f"../images/{b_id}/{today_str}"
+    os.makedirs(imagefolder, exist_ok=True)
+
+    image_create_list = []
+    saved_file_paths = []
+
+    for file in files:
+        origin = os.path.splitext(file.filename)[1]
+        save = f"{uuid.uuid4()}{origin}"
+        imagepath = f"{imagefolder}/{save}"
+        
+        contents = await file.read()
+        with open(imagepath, "wb") as f:
+            f.write(contents)
+
+        data = BabyImage_Create(i_save=save,
+                                i_origin=file.filename,
+                                i_label="분석 중...",
+                                b_id=b_id,
+                                i_image=imagepath)
+        image_create_list.append(data)
+        saved_file_paths.append(imagepath)
+
+    image_data_list = await BabyImage_Service.services_babyimages_multi_create(db, image_create_list)
+
+    for image_data, imagepath in zip(image_data_list, saved_file_paths):
+        background_tasks.add_task(
+            run_ai_and_update_db, 
+            i_id=image_data.i_id,  
+            imagepath=imagepath
+        )
+
+    return image_data_list
 
 
 # POST 이미지 등록

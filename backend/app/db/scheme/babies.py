@@ -11,7 +11,6 @@ class Baby_Base(BaseModel):
     b_height: Decimal
     b_weight : Decimal
     b_image : str | None = None 
-    g_id : int
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -31,12 +30,13 @@ class Baby_Update(BaseModel):
 
 class Baby_Public(Baby_Base):
     b_name: str
-    b_birth : str
+    b_birth : datetime
     b_gender : str
     
     
 class Baby_Read(Baby_Base):
     b_id: int
+    g_id : int
     b_created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     
 

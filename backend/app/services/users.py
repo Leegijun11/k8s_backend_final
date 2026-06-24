@@ -60,8 +60,7 @@ class User_Service:
                 detail=f"회원가입 실패: {e}"  
             )
         
-    
-
+        
 
     #로그인
     @staticmethod

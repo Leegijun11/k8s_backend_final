@@ -15,6 +15,7 @@ from app.db.models.parents import Parent
 from app.db.models.records import Record
 from app.db.models.users import User
 from app.db.models.tips import Tip
+from app.db.models.logs import Log
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,3 +39,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+async def root():
+    return {"message": "home"}
+
+# app.include_router(health.router)
+# app.include_router(items.router)
+app.include_router(babyimages.router)

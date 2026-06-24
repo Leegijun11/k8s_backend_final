@@ -53,7 +53,7 @@ async def router_users_me(u_id:int=Depends(auth_get_u_id), db:AsyncSession=Depen
 
 
 #아이디 찾기
-@router.get('/find_account',response_model=User_Read)
+@router.get('/find_account')
 async def router_users_find_account(u_name:str, u_email:EmailStr,u_phone:str, db:AsyncSession=Depends(get_db)):
     return await User_Service.service_users_find_account(db, u_name, u_email,u_phone)
 

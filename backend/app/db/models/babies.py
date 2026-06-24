@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from app.db.models.diaries import Diary
     from app.db.models.records import Record
     from app.db.models.babyimages import BabyImage
+    from app.db.models.logs import Log
 
 class Baby(Base):
     __tablename__ = 'babies'
@@ -33,3 +34,5 @@ class Baby(Base):
     diaries: Mapped[List["Diary"]] = relationship("Diary", back_populates="baby", cascade="all, delete-orphan")
     record: Mapped[list["Record"]] = relationship("Record", back_populates="baby", cascade="all, delete-orphan")
     images: Mapped[List["BabyImage"]] = relationship("BabyImage", back_populates="baby", cascade="all, delete-orphan")
+    logs : Mapped[List["Log"]] = relationship("Log", back_populates="baby", cascade="all, delete-orphan")
+    

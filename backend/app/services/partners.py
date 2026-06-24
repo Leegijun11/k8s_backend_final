@@ -1,4 +1,0 @@
-#service_partners_create
-#service_partners_list
-#service_partners_delete
-

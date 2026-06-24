@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select, func
+from sqlalchemy import func
+from sqlalchemy.future import select
 from datetime import datetime
 from app.db.models.diaries import Diary 
 from app.db.scheme.diaries import Diary_Create, Diary_Update
