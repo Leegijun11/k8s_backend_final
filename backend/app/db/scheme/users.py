@@ -26,6 +26,10 @@ class User_Login(BaseModel):
     u_pw: Annotated[str, Field(max_length=72)]
 
 
+class User_pw(BaseModel):
+    u_pw: Annotated[str, Field(max_length=72)]
+
+
 class User_Update(BaseModel):
     u_pw: Annotated[str | None, Field(max_length=72, default=None)] = None 
     u_name: str | None = None   

@@ -13,3 +13,4 @@ pyjwt==2.8.0
 bcrypt==3.2.2
 langchain-openai==0.2.5
 python-dotenv==1.0.1
+starlette==0.37.2

@@ -5,15 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 # DB 및 엔진
 from app.db.database import async_engine, Base
 
-# Models
-from app.db.models.alarms import Alarm
-from app.db.models.babies import Baby
-from app.db.models.babycharacters import BabyCharacter
-from app.db.models.care_group import Care_Group
-from app.db.models.diaries import Diary
-from app.db.models.parents import Parent
-from app.db.models.records import Record
-from app.db.models.stories import Story
+
+from app import send
+
 # Routers
 from app.routers import (
     babyimages, babies, babycharacters, record, 
@@ -54,4 +48,5 @@ app.include_router(logs.router)
 app.include_router(alarm.router)
 app.include_router(diaries.router)
 app.include_router(stories.router)
+app.include_router(send.router)
 # uvicorn main:app --reload

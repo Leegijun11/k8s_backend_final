@@ -183,6 +183,19 @@ class User_Service:
                 status_code=status .HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"아이디 찾기 중 서버 오류: {e}"
             )
+        
+
+    @staticmethod
+    async def service_users_find_pw(db: AsyncSession, u_account :str, u_name: str, u_email: str, u_phone: str):
+        result = await User_Crud.crud_users_u_pw_by_udata(db, u_account, u_name, u_email, u_phone)
+
+        if not result:
+            return {"msg" : "일치하는 정보를 찾을 수 없습니다."}
+        
+        return result 
+
+        
+                                    
 
     #유저 정보 수정
     @staticmethod

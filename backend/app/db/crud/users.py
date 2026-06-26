@@ -42,10 +42,10 @@ class User_Crud:
     # 유저 비밀번호 찾기
     @staticmethod
     async def crud_users_u_pw_by_udata(db: AsyncSession,
-                                           u_account :str, 
-                                           u_name: str, 
-                                           u_email: str, 
-                                           u_phone: str) -> User | None:
+                                       u_account :str,
+                                       u_name: str,
+                                       u_email: str,
+                                       u_phone: str) -> User | None:
         result = await db.execute(select(User)
                                   .filter(User.u_account==u_account, 
                                           User.u_name == u_name, 
