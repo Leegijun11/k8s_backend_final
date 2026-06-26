@@ -173,7 +173,7 @@ class User_Service:
             else:
                 hidden_id=raw_id[:3]+"*" *(len(raw_id) - 3)
 
-                return{"u_account":hidden_id}
+            return{"u_account":hidden_id}
             
         except HTTPException:
             raise
