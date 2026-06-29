@@ -2,29 +2,32 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
+from app.core.scheduler import start_scheduler
 
-# DB 및 엔진
 from app.db.database import async_engine, Base
-# 새로운 모델을 여기서 반드시 import 해야 테이블이 생성됩니다!
 from app.db.models.milestones import Milestone
 from app.db.models.babymilestones import BabyMilestone
 
-# Routers
 from app.routers import (
     babyimages, babies, babycharacters, record, 
     users, tips, logs, parent, alarm, diaries, stories,
-    milestones # 새로 만든 라우터도 추가
+    milestones
 )
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with async_engine.begin() as conn:
-        # Base를 상속받은 모든 모델이 import 되어 있어야 여기서 테이블이 생성됩니다.
         await conn.run_sync(Base.metadata.create_all)
+
+    start_scheduler()   # 서버 시작 시 스케줄러도 같이 시작
+
     yield
     await async_engine.dispose()
 
+
 app = FastAPI(title="Backend API", lifespan=lifespan)
+
 
 # CORS 설정
 app.add_middleware(
@@ -51,6 +54,6 @@ app.include_router(logs.router)
 app.include_router(alarm.router)
 app.include_router(diaries.router)
 app.include_router(stories.router)
-app.include_router(milestones.router) # 라우터 등록
+app.include_router(milestones.router)
 
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
