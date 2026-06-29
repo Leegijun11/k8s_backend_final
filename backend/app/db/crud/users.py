@@ -47,7 +47,7 @@ class User_Crud:
                                        u_email: str,
                                        u_phone: str) -> User | None:
         result = await db.execute(select(User)
-                                  .filter(User.u_account==u_account, 
+                                  .where(User.u_account==u_account, 
                                           User.u_name == u_name, 
                                           User.u_email==u_email,
                                           User.u_phone==u_phone))

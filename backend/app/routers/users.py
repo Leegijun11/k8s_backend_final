@@ -58,6 +58,21 @@ async def router_users_find_account(u_name:str, u_email:EmailStr,u_phone:str, db
     return await User_Service.service_users_find_account(db, u_name, u_email,u_phone)
 
 
+# 비밀번호 찾기
+@router.post('/find_pw')
+async def router_users_find_pw(u_account: str,
+                               u_name: str,
+                               u_email: EmailStr,
+                               u_phone: str, 
+                               db: AsyncSession = Depends(get_db)):
+    
+    return await User_Service.service_users_find_pw(db,
+                                                    u_account,
+                                                    u_name,
+                                                    u_email,
+                                                    u_phone)
+
+
 #유저 정보 수정
 @router.put('/edit', response_model=dict)
 async def router_users_update(user_update:User_Update, u_id:int=Depends(auth_get_u_id), db: AsyncSession = Depends(get_db)):
