@@ -259,6 +259,34 @@ class User_Service:
                 detail=f"비밀번호 찾기 처리 중 서버 오류가 발생했습니다: {e}"
             )
 
+
+    #유저 정보 수정
+    @staticmethod
+    async def service_users_update(db:AsyncSession, u_id:int, update_user:User_Update):
+        try:
+            updated_data=update_user.model_dump(exclude_unset=True)
+
+            if updated_data.get("u_pw"):
+                updated_data['u_pw']=get_password_hash(updated_data["u_pw"])
+
+            updated_model=User_Update(**updated_data)
+
+            updated_user=await User_Crud.crud_users_update(db, u_id, updated_model)
+
+            if not updated_user:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="정보 수정에 실패")
+
+            await db.commit()
+            await db.refresh(updated_user)
+            return{"msg":"정보를 수정함"}
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"정보 수정에 실패했습니다{e}"
+            )
     
     #유저 삭제
     @staticmethod
