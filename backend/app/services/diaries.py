@@ -4,45 +4,52 @@ from fastapi import status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.scheme.diaries import Diary_Create, Diary_Update
 from app.db.crud.diaries import Diary_Crud
-from app.ai.llm import generate_diary_content
+from app.ai.llm_run import ai_llm_run
 from datetime import date
 
 class Diary_Service:
 
     # 일기 생성
     @staticmethod
-    async def service_diaries_create(db: AsyncSession, diary: Diary_Create):
+    async def service_diaries_create(db: AsyncSession, diary: Diary_Create, ai_create: bool):
         try:
-            log = await Diary_Crud.crud_diaries_get_log(db, diary.b_id, diary.d_date)
-            if not log:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="해당 날짜의 로그 정보가 없습니다"
-                )
+            if ai_create:
+                log = await Diary_Crud.crud_diaries_get_log(db, diary.b_id, diary.d_date)
 
-            images = await Diary_Crud.crud_diaries_get_images(db, diary.b_id, diary.d_date)
-            if not images:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="해당 날짜의 이미지 정보가 없습니다"
-                )
+                if not log:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="해당 날짜의 로그 정보가 없습니다"
+                    )
+                
+                images = await Diary_Crud.crud_diaries_get_images(db, diary.b_id, diary.d_date)
 
-            llm_result = await generate_diary_content(log, images)
+                if not images:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="해당 날짜의 이미지 정보가 없습니다"
+                    )
 
-            diary_data = {
-                "d_title": llm_result["d_title"],
-                "d_content": llm_result["d_content"],
-                "d_label": llm_result.get("d_label") or "미분류",
-                "d_date": diary.d_date,
-                "d_image": images[0].i_image,  # 임시: 첫 이미지 경로 사용
-                "d_eat": llm_result.get("d_eat"),
-                "d_sleep": llm_result.get("d_sleep"),
-                "d_toilet": llm_result.get("d_toilet"),
-                "d_temp": llm_result.get("d_temp"),
-                "b_id": diary.b_id,
-            }
+                llm_result = await ai_llm_run(log.l_content)
 
-            new_diary = await Diary_Crud.crud_diaries_create(db, diary_data)
+                diary_data = {
+                    "d_title": f"{diary.d_date} ai 일기",
+                    "d_content": llm_result.get("d_content"),
+                    "d_label": llm_result.get("d_label"),
+                    "d_date": diary.d_date,
+                    "d_image": images[0].i_image if images else None,  
+                    "d_eat": llm_result.get("d_eat"),
+                    "d_sleep": llm_result.get("d_sleep"),
+                    "d_toilet": llm_result.get("d_toilet"),
+                    "d_temp": llm_result.get("d_temp"),
+                    "b_id": diary.b_id,
+                }
+
+                new_diary = await Diary_Crud.crud_diaries_create(db, diary_data)
+            
+            else:
+                user_diary_data = diary.model_dump() 
+                new_diary = await Diary_Crud.crud_diaries_create(db, user_diary_data)
 
             await db.commit()
             await db.refresh(new_diary)

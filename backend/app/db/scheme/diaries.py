@@ -4,8 +4,16 @@ from typing import Optional
 
 
 class Diary_Create(BaseModel):
-    b_id: int
+    d_title: Optional[str] = None
+    d_content: Optional[str] = None
+    d_label: Optional[str] = None
+    d_image: Optional[str] = None
+    d_eat: Optional[str] = None
+    d_sleep: Optional[str] = None
+    d_toilet: Optional[str] = None
+    d_temp: Optional[str] = None
     d_date: date
+    b_id: int
 
 
 class Diary_Read(BaseModel):
