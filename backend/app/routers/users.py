@@ -11,7 +11,7 @@
 from fastapi import APIRouter, Depends, Response, status, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import EmailStr
-from app.db.scheme.users import User_Create, User_Update, User_Login, User_Public
+from app.db.scheme.users import User_Create, User_Update, User_Login, User_Public, User_Read
 from app.services.users import User_Service
 from app.core.auth import set_auth_cookies, auth_get_u_id
 from app.db.database import get_db
