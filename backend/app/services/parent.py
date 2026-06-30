@@ -35,7 +35,6 @@ class Parent_Service:
             if first_baby:
                 parent_data["current_b_id"] = first_baby.b_id
 
-            from app.db.models.parents import Parent
             db_data = Parent(**parent_data)
             db.add(db_data)
             await db.flush()
@@ -45,6 +44,7 @@ class Parent_Service:
             return {"msg": "공동 양육자를 초대했습니다"}
 
         except HTTPException:
+            await db.rollback()
             raise
 
         except Exception as e:
