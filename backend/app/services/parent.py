@@ -1,4 +1,4 @@
-
+from app.db.models.parents import Parent
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from fastapi import status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,7 +7,6 @@ from typing import Optional
 
 from app.db.crud.parents import Parent_Crud
 from app.db.scheme.parents import Parent_Create,Parent_Base,Parent_Update,Parent_Read
-from app.db.models.parents import Parent
 from app.db.models.users import User
 from app.db.models.care_group import Care_Group
 from app.db.models.babies import Baby
@@ -18,7 +17,8 @@ class Parent_Service:
     @staticmethod
     async def service_parents_create(db: AsyncSession, parent: Parent_Create):
         try:
-            # 이미 그룹에 속해있는지 재확인 (수락 시점 기준)
+            # 이제 상단에서 import한 Parent를 바로 사용할 수 있습니다.
+            # 이미 그룹에 속해있는지 재확인
             existing = select(Parent).where(Parent.u_id == parent.u_id)
             result_existing = await db.execute(existing)
             existing_parent = result_existing.scalar_one_or_none()
@@ -35,6 +35,7 @@ class Parent_Service:
             if first_baby:
                 parent_data["current_b_id"] = first_baby.b_id
 
+            # 내부 import 제거하고 바로 사용
             db_data = Parent(**parent_data)
             db.add(db_data)
             await db.flush()
@@ -49,7 +50,7 @@ class Parent_Service:
 
         except Exception as e:
             await db.rollback()
-            print("ERROR >>>",repr(e))
+            print("ERROR >>>", repr(e))
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"공동 양육자 초대에 실패했습니다: {e}"
