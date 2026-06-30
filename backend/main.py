@@ -14,10 +14,13 @@ from app.db.models.diaries import Diary
 from app.db.models.parents import Parent
 from app.db.models.records import Record
 from app.db.models.stories import Story
+from app.db.models.forums import Forums
+from app.db.models.forumlikes import ForumLike
+from app.db.models.forumtags import ForumTag
 # Routers
 from app.routers import (
     babyimages, babies, babycharacters, record, 
-    users, tips, logs, parent, alarm, diaries, stories
+    users, tips, logs, parent, alarm, diaries, stories, forum, forumlikes
 )
 
 @asynccontextmanager
@@ -54,4 +57,6 @@ app.include_router(logs.router)
 app.include_router(alarm.router)
 app.include_router(diaries.router)
 app.include_router(stories.router)
+app.include_router(forum.router)
+app.include_router(forumlikes.router)
 # uvicorn main:app --reload

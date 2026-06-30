@@ -4,7 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, String, Text, TIMESTAMP, func, UniqueConstraint
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
-from backend.app.db.models.forums import Forums
+from app.db.models.forums import Forums
 
 # 순환 참조(Circular Import) 방지를 위한 타입 체킹
 if TYPE_CHECKING:
@@ -26,5 +26,5 @@ class ForumLike(Base):
     u_id: Mapped[int] = mapped_column(ForeignKey('users.u_id'), nullable=False)
 
     # 관계(Relationship) 설정
-    forum: Mapped["Forums"] = relationship("Forum", back_populates="likes")
+    forum: Mapped["Forums"] = relationship("Forums", back_populates="likes")
     user: Mapped["User"] = relationship("User", back_populates="forum_likes")
