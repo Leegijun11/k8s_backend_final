@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Text
 if TYPE_CHECKING:
     from app.db.models.babies import Baby
-
+    from app.db.models.story_pages import Story_Page
 
 class Story(Base):
     __tablename__ = 'stories'
@@ -13,6 +13,6 @@ class Story(Base):
     s_id: Mapped[int] = mapped_column(primary_key=True)
     s_name: Mapped[str] = mapped_column(String(100), nullable=False)
     b_id: Mapped[int] = mapped_column(ForeignKey('babies.b_id', ondelete="CASCADE"), nullable=False)
-    s_content: Mapped[str] = mapped_column(Text, nullable=True)
 
     baby: Mapped["Baby"] = relationship("Baby", back_populates="stories")
+    pages: Mapped[list["Story_Page"]] = relationship("Story_Page", back_populates="story", cascade="all, delete-orphan")

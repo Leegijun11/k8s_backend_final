@@ -5,8 +5,13 @@ from typing import Optional
 
 class Story_Create(BaseModel):
     b_id: int
+    s_name: str | None=None
     start_date: date
     end_date: date
+
+
+class Story_Update(BaseModel):
+    s_name: str
 
 
 class Story_Read(BaseModel):
@@ -14,5 +19,4 @@ class Story_Read(BaseModel):
 
     s_id: int
     s_name: str
-    s_content: Optional[str] = None
     b_id: int
