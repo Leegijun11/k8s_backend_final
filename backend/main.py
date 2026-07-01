@@ -32,7 +32,7 @@ app = FastAPI(title="Backend API", lifespan=lifespan)
 # CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "https://dearbaby.site"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
