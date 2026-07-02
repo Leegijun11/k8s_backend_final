@@ -14,31 +14,31 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 # 1. 아이 정보 등록
 @router.post("/create", response_model=Baby_Read)
 async def routers_babies_create(baby:Baby_Create, u_id: int = Depends(auth_get_u_id),db:AsyncSession=Depends(get_db)):
-    db_data=await BabyService.service_babies_create(u_id, baby, db)
+    db_data=await BabyService.service_babies_create(db, u_id, baby)
     return db_data
 
 # 2. 아이 목록 조회
 @router.get("/list", response_model=list[Baby_Read])
 async def routers_babies_list(u_id:int = Depends(auth_get_u_id), db:AsyncSession=Depends(get_db)):
-    db_data=await BabyService.service_babies_list(u_id, db)
+    db_data=await BabyService.service_babies_list(db, u_id)
     return db_data
     
 # 3. 아이 세부 정보
 @router.get("/{b_id}", response_model=Baby_Read)
 async def routers_babies_read(b_id:int, db:AsyncSession=Depends(get_db)):
-    db_data=await BabyService.service_babies_read(b_id, db)
+    db_data=await BabyService.service_babies_read(db, b_id)
     return db_data
     
 # 4. 아이 정보 수정
 @router.put("/edit")
 async def routers_babies_update(b_id:int, baby:Baby_Update, db:AsyncSession=Depends(get_db)):
-    db_data=await BabyService.service_babies_update(b_id, baby, db)
+    db_data=await BabyService.service_babies_update(db, b_id, baby)
     return {"message":"수정되었습니다.", "data":db_data}
     
 # 5. 아이 정보 삭제
 @router.delete("/del", response_model=Baby_Read)
 async def routers_babies_delete(b_id:int, db:AsyncSession=Depends(get_db)):
-    db_data=await BabyService.service_babies_delete(b_id, db)
+    db_data=await BabyService.service_babies_delete(db, b_id)
     return db_data
 
 @router.post("/upload_image")
