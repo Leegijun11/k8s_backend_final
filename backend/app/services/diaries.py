@@ -57,6 +57,7 @@ class Diary_Service:
             return new_diary
 
         except HTTPException:
+            await db.rollback()
             raise
 
         except Exception as e:
