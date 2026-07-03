@@ -8,11 +8,13 @@ from app.core.scheduler import start_scheduler
 from app.db.database import async_engine, Base
 from app.db.models.milestones import Milestone
 from app.db.models.babymilestones import BabyMilestone
+# ★ 표준 모델 테이블 싱크를 위해 임포트 (기존 임포트 하단에 추가)
+from app.db.models.standards import BabyStandard 
 
 from app.routers import (
     babyimages, babies, babycharacters, record, 
     users, tips, logs, parent, alarm, diaries, stories,
-    milestones, health
+    milestones, health, standards  # ★ standards 라우터 추가
 )
 
 
@@ -57,6 +59,7 @@ app.include_router(alarm.router)
 app.include_router(diaries.router)
 app.include_router(stories.router)
 app.include_router(milestones.router)
+app.include_router(standards.router)  # ★ standards 라우터 추가
 
 
 # --- 정적 파일(Static Files) 설정 ---

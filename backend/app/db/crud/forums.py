@@ -1,0 +1,73 @@
+#crud_forum_create 게시글 생성
+#crud_forum_list 게시글 목록
+#crud_forum_context 게시글 상세
+#crud_forum_update 게시글 수정
+#crud_forum_delete 게시글 삭제
+
+from sqlalchemy import select, func, desc
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.db.models.forums import Forums
+from app.db.scheme.forums import Forum_Create, Forum_Update
+
+class Forums_CRUD:
+    
+
+    #게시글 생성
+    @staticmethod
+    async def crud_forum_create(db: AsyncSession, forum_data:Forum_Create , u_id:int):
+        new_forum=Forums(
+            u_id=u_id,
+            f_title=forum_data.f_title,
+            f_content=forum_data.f_content,
+            f_image=forum_data.f_image,
+            f_tags=forum_data.f_tags,
+        )
+        db.add(new_forum)
+        await db.commit()
+        await db.refresh(new_forum)
+        return new_forum
+    
+
+    #게시글 목록(태그 분류)
+    @staticmethod
+    async def crud_forum_list(db:AsyncSession,
+                              tag: str | None = None,
+                              baby_character: str | None= None,
+                              sort: str | None = None):
+        list_forums=select(Forums)
+
+
+        #태그 분류
+        if tag:
+            list_forums=list_forums.where(Forums.f_tags.contains(tag))
+
+        result=await db.execute(list_forums)
+        return result.scalars().all()
+    
+
+    #게시글 상세
+    @staticmethod
+    async def crud_forum_context(db:AsyncSession, f_id: int):
+        forums=await db.get(Forums, f_id)
+        return forums
+    
+
+    #게시글 수정
+    @staticmethod
+    async def crud_forum_update(db:AsyncSession, db_forum: Forums, forum_data: Forum_Update):
+        update_forum=forum_data.model_dump(exclude_unset=True)
+
+        for key, value in update_forum.items():
+            setattr(db_forum, key, value)
+        
+        await db.commit()
+        await db.refresh(db_forum)
+        return db_forum
+
+    
+    #게시글 삭제
+    @staticmethod
+    async def crud_forum_delete(db:AsyncSession, db_forum: Forums):
+        await db.delete(db_forum)
+        await db.commit()
+        return True
