@@ -1,4 +1,4 @@
-import os  # 절대 경로 처리를 위해 추가
+import os
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
@@ -43,6 +43,7 @@ app.add_middleware(
 async def root():
     return {"message": "home"}
 
+# 라우터 등록
 app.include_router(health.router)
 app.include_router(users.router)
 app.include_router(parent.router)
@@ -58,11 +59,18 @@ app.include_router(stories.router)
 app.include_router(milestones.router)
 
 
-# --- 정적 파일 절대 경로 설정 추가 ---
-# 현재 main.py 파일이 있는 위치의 절대 경로를 구합니다.
+# --- 정적 파일(Static Files) 설정 ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# main.py와 같은 위치에 있는 'uploads' 폴더의 전체 경로를 만듭니다.
-UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 
-# directory 옵션에 계산된 절대 경로(UPLOAD_DIR)를 대입합니다.
+# 1. 기존 uploads 폴더 마운트
+UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+
+# 2. 상위 폴더의 실제 아기 사진 images 폴더 마운트 (완벽함!)
+PARENT_DIR = os.path.dirname(BASE_DIR)
+IMAGES_DIR = os.path.join(PARENT_DIR, "images")
+
+if not os.path.exists(IMAGES_DIR):
+    os.makedirs(IMAGES_DIR)
+
+app.mount("/images", StaticFiles(directory=IMAGES_DIR), name="images")
