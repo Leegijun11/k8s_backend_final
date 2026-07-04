@@ -79,14 +79,15 @@ class Forums_CRUD:
             'sleepy': BabyCharacter.c_sleepy, 'charm': BabyCharacter.c_charm,
         }
 
+
         if baby_character:
             list_forums = list_forums.join(Forums.baby).join(Baby.character)
             
             if isinstance(baby_character, list):
-                conditions = [CHARACTER_MAP[c] == 1 for c in baby_character if c in CHARACTER_MAP]
+                conditions = [CHARACTER_MAP[c] == True for c in baby_character if c in CHARACTER_MAP]
                 list_forums = list_forums.where(or_(*conditions))
             elif baby_character in CHARACTER_MAP:
-                list_forums = list_forums.where(CHARACTER_MAP[baby_character] == 1)
+                list_forums = list_forums.where(CHARACTER_MAP[baby_character] == True)
 
         if sort == 'likes':
             list_forums = list_forums.order_by(desc(Forums.f_like_count), desc(Forums.f_created_at))
@@ -113,6 +114,8 @@ class Forums_CRUD:
             for f in forums:
                 f.is_liked = False
                 f.comment_count = len(f.comments) 
+
+        
 
         return forums
     #게시글 상세

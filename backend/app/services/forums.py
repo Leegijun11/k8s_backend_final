@@ -52,7 +52,7 @@ class Forum_Service:
     @staticmethod
     async def service_forums_list(db: AsyncSession,
                                   tag: str | None = None,
-                                  baby_character: str | None = None,
+                                  baby_character: str | list | None = None,
                                   sort: str | None = None,
                                   u_id: int | None = None,
                                   b_id: int | None = None):
@@ -75,12 +75,14 @@ class Forum_Service:
 
                 if not my_baby_char:
                     raise HTTPException(status_code=400, detail="등록된 아기 기질 정보가 없습니다.")
-
-                # 활성화된 모든 기질을 리스트로 추출
-                active_chars = [key for key, field_name in CHARACTER_MAP.items() 
-                                if getattr(my_baby_char, field_name) == 1]
                 
-                baby_character = active_chars if active_chars else None
+                active_chars = [key for key, field_name in CHARACTER_MAP.items() 
+                                if getattr(my_baby_char, field_name)]
+                
+                if not active_chars:
+                    raise HTTPException(status_code=400, detail="아기의 성격(기질)이 하나도 등록되지 않았습니다. 마이페이지에서 성격을 등록해주세요.")
+                
+                baby_character = active_chars
 
             forums = await Forums_CRUD.crud_forum_list(
                 db, tag=tag, baby_character=baby_character, sort=sort, u_id=u_id

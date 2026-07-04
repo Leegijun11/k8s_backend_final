@@ -97,7 +97,7 @@ async def router_forums_delete(f_id: int,
 @router.post("/upload_image")
 async def router_forums_upload_image(file: UploadFile = File(...)):
     # 파일 이름에서 확장자(.jpg, .png 등) 분리
-    ext = file.filename.split(".")[-1]
+    ext = file.filename.split(".")[-1] if file.filename else "png"
     # 고유한 랜덤 이름 생성
     new_filename = f"{uuid.uuid4()}.{ext}"
     # 저장할 경로 완성
