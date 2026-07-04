@@ -61,21 +61,30 @@ class BabyService:
             await db.rollback()
             raise HTTPException(status_code=400, detail=f"{e}아이 정보 등록에 실패했습니다.")
 
-    # 2. 아이 목록 조회
+    # 2. 아이 목록 조회 (★ 상태값 검증 로직 반영 및 안전장치 추가)
     @staticmethod
-    async def service_babies_list(db:AsyncSession, u_id:int):
+    async def service_babies_list(u_id: int, db: AsyncSession):
         try:
-            db_data=await Baby_Crud.crud_babies_list(db, u_id)
+            # 1) 해당 유저의 양육자(Parent) 정보를 먼저 가져옵니다.
+            parent_data = await Parent_Crud.crud_parents_get_by_u_id(db, u_id)
+            
+            # 2) 양육자 정보가 없거나, 아직 초대를 승인하지 않은 상태('active'가 아님)라면 아기 목록을 숨깁니다.
+            if not parent_data or parent_data.g_id is None or parent_data.p_state != "active":
+                return []  # 수락하기 전엔 빈 리스트([])를 전달하여 프론트엔드 노출을 원천 차단합니다.
+
+            # 3) 정식 활성화(active)된 유저인 경우에만 기존 CRUD 목록 조회를 수행합니다.
+            db_data = await Baby_Crud.crud_babies_list(db, u_id)
             return db_data
+            
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"아이들의 정보를 불러오는 중 서버 오류가 발생했습니다 : {e}")        
 
         
     # 3. 아이 세부 정보
     @staticmethod
-    async def service_babies_read(db: AsyncSession, b_id:int):
+    async def service_babies_read(b_id: int, db: AsyncSession):
         try:
-            db_data=await Baby_Crud.crud_babies_detail(db, b_id)
+            db_data = await Baby_Crud.crud_babies_detail(db, b_id)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"아이의 세부 정보 로드 실패 : {e}")
         if db_data is None:
@@ -86,7 +95,7 @@ class BabyService:
 
     # 4. 아이 정보 수정(추가)
     @staticmethod
-    async def service_babies_update(db:AsyncSession, b_id:int, baby:Baby_Update):
+    async def service_babies_update(b_id: int, baby: Baby_Update, db: AsyncSession):
         if (baby.b_height is not None and baby.b_height <= 0) or \
            (baby.b_weight is not None and baby.b_weight <= 0):
             raise HTTPException(status_code=400, detail="키와 몸무게는 0보다 커야 합니다.")
@@ -115,25 +124,24 @@ class BabyService:
             
         except Exception as e:
             await db.rollback()
-            raise HTTPException(status_code=400, detail="아이의 정보를 수정하는데 실패했습니다.")
+            raise HTTPException(status_code=400, detail=f"아이의 정보를 수정하는데 실패했습니다.")
 
     # 5. 아이 정보 삭제
     @staticmethod
-    async def service_babies_delete(db: AsyncSession, b_id:int):
+    async def service_babies_delete(b_id: int, db: AsyncSession):
         try:
-            exist_baby=await Baby_Crud.crud_babies_detail(db, b_id)
+            exist_baby = await Baby_Crud.crud_babies_detail(db, b_id)
         except Exception as e:
-            raise HTTPException(status_code=500, detail="아이 정보 확인 중 오류가 발생했습니다.")
+            raise HTTPException(status_code=500, detail=f"아이 정보 확인 중 오류가 발생했습니다.")
         if exist_baby is None:
-            raise HTTPException(status_code=404, detail="삭제할 아이의 정보가 존재하지 않습니다.")
+            raise HTTPException(status_code=404, detail=f"삭제할 아이의 정보가 존재하지 않습니다.")
 
         try:
-            db_data=await Baby_Crud.crud_babies_del(db, b_id)
+            db_data = await Baby_Crud.crud_babies_del(db, b_id)
 
             await db.commit()
             return db_data
         
         except Exception as e:
             await db.rollback()
-            raise HTTPException(status_code=500, detail="아이의 정보를 삭제하는데 실패했습니다.")
-        
+            raise HTTPException(status_code=500, detail=f"아이의 정보를 삭제하는데 실패했습니다.{e}")

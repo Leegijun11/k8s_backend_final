@@ -2,6 +2,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.scheme.forumcomments import ForumComment_Create, ForumComment_Update
 from app.db.crud.forumcomments import ForumComment_Crud
 from fastapi import HTTPException, status
+from sqlalchemy.future import select
+from sqlalchemy.orm import joinedload
+from app.db.models.forumcomments import ForumComment
 
 class ForumCommentService:
     
@@ -13,22 +16,30 @@ class ForumCommentService:
         try:
             db_data=await ForumComment_Crud.crud_forumcomments_create(db,f_id, u_id, comment)
             await db.commit()
-            await db.refresh(db_data)
+        
+            db_data = await db.scalar(select(ForumComment).options(joinedload(ForumComment.user)).where(ForumComment.fc_id == db_data.fc_id))
+            
             return db_data
         except Exception as e:
             await db.rollback()
             raise HTTPException(status_code=500, detail=f"댓글 등록에 실패했습니다 : {e}")
         
 
-    # 2. 댓글 조회
+# 2. 댓글 조회
     @staticmethod
-    async def service_forumcomments_list(db:AsyncSession, f_id:int):
+    async def service_forumcomments_list(db: AsyncSession, f_id: int, u_id: int):
         try:
-            db_data=await ForumComment_Crud.crud_forumcomments_list(db, f_id)
+            db_data = await ForumComment_Crud.crud_forumcomments_list(db, f_id)
+            
+            for comment in db_data:
+                comment.is_liked = any(like.u_id == u_id for like in comment.comment_likes)
+                
             return db_data
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"댓글 목록을 불러오는 중 오류가 발생했습니다 : {e}")
+            await db.rollback()
+            raise HTTPException(status_code=500, detail=f"댓글 조회에 실패했습니다 : {e}")
         
+
 
     # 3. 댓글 수정
     @staticmethod
@@ -40,7 +51,9 @@ class ForumCommentService:
             if db_data is None:
                 raise HTTPException(status_code=404, detail="댓글을 찾을 수 없습니다.")
             await db.commit()
-            await db.refresh(db_data)
+            
+            db_data = await db.scalar(select(ForumComment).options(joinedload(ForumComment.user)).where(ForumComment.fc_id == fc_id))
+            
             return db_data
         except HTTPException:
             await db.rollback()

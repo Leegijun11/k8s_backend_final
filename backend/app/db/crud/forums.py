@@ -4,8 +4,8 @@
 #crud_forum_update 게시글 수정
 #crud_forum_delete 게시글 삭제
 
-from sqlalchemy import select, func, desc
-from sqlalchemy.orm import joinedload
+from sqlalchemy import select, func, desc, or_
+from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.forums import Forums
@@ -55,49 +55,46 @@ class Forums_CRUD:
 
     #게시글 목록(태그 분류)
     @staticmethod
-    async def crud_forum_list(db:AsyncSession,
+    async def crud_forum_list(db: AsyncSession,
                               tag: str | None = None,
-                              baby_character: str | None= None,
+                              baby_character: str | list | None = None,
                               sort: str | None = None,
-                              u_id: int | None=None):
-        list_forums=select(Forums).options(joinedload(Forums.forum_tag), joinedload(Forums.user))
+                              u_id: int | None = None):
+        
+        list_forums = select(Forums).options(
+            joinedload(Forums.forum_tag), 
+            joinedload(Forums.user),
+            selectinload(Forums.comments) 
+        )
 
-
-        #태그 분류
-        TAG_MAP={
-            'sleep':ForumTag.ft_sleep,
-            'food':ForumTag.ft_food,
-            'health':ForumTag.ft_health,
-            'play':ForumTag.ft_play,
-        }
+        TAG_MAP = {'sleep': ForumTag.ft_sleep, 'food': ForumTag.ft_food, 
+                   'health': ForumTag.ft_health, 'play': ForumTag.ft_play}
         
         if tag and tag in TAG_MAP:
-            list_forums=list_forums.join(ForumTag).where(TAG_MAP[tag]==True)
+            list_forums = list_forums.join(Forums.forum_tag).where(TAG_MAP[tag] == True)
 
-        #아기 기질 분류
         CHARACTER_MAP = {
-            'curiosity': BabyCharacter.c_curiosity,
-            'active': BabyCharacter.c_active,
-            'shy': BabyCharacter.c_shy,
-            'eater': BabyCharacter.c_eater,
-            'sleepy': BabyCharacter.c_sleepy,
-            'charm': BabyCharacter.c_charm,
+            'curiosity': BabyCharacter.c_curiosity, 'active': BabyCharacter.c_active,
+            'shy': BabyCharacter.c_shy, 'eater': BabyCharacter.c_eater,
+            'sleepy': BabyCharacter.c_sleepy, 'charm': BabyCharacter.c_charm,
         }
 
-        if baby_character and baby_character in CHARACTER_MAP:
-            list_forums=list_forums.join(Forums.baby).join(Baby.character).where(CHARACTER_MAP[baby_character]==True)
+        if baby_character:
+            list_forums = list_forums.join(Forums.baby).join(Baby.character)
+            
+            if isinstance(baby_character, list):
+                conditions = [CHARACTER_MAP[c] == 1 for c in baby_character if c in CHARACTER_MAP]
+                list_forums = list_forums.where(or_(*conditions))
+            elif baby_character in CHARACTER_MAP:
+                list_forums = list_forums.where(CHARACTER_MAP[baby_character] == 1)
 
-        #정렬
         if sort == 'likes':
-            list_forums=list_forums.order_by(desc(Forums.f_like_count), desc(Forums.f_created_at))
+            list_forums = list_forums.order_by(desc(Forums.f_like_count), desc(Forums.f_created_at))
         else:
-            list_forums=list_forums.order_by(desc(Forums.f_created_at))
+            list_forums = list_forums.order_by(desc(Forums.f_created_at))
 
-        result=await db.execute(list_forums)
-        # return result.scalars().all()
-
-        # 좋아요 표시 
-        forums= result.scalars().all()
+        result = await db.execute(list_forums)
+        forums = result.scalars().unique().all()
     
         if u_id and forums:
             forum_ids = [f.f_id for f in forums]
@@ -109,16 +106,15 @@ class Forums_CRUD:
             liked_result = await db.execute(liked_stmt)
             liked_set = set(liked_result.scalars().all()) 
                 
-            
             for f in forums:
                 f.is_liked = f.f_id in liked_set
+                f.comment_count = len(f.comments) 
         else:
-
             for f in forums:
                 f.is_liked = False
+                f.comment_count = len(f.comments) 
 
         return forums
-
     #게시글 상세
     @staticmethod
     async def crud_forum_context(db:AsyncSession, f_id: int, u_id: int | None = None):

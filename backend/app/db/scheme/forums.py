@@ -36,4 +36,5 @@ class Forum_Read(Forum_Base):
 
     user: User_Read
 
+    comment_count: int = 0
 

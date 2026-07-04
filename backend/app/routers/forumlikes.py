@@ -10,7 +10,6 @@ from app.core.auth import auth_get_u_id
 
 router=APIRouter(prefix="/forumlike", tags=["ForumLike"])
 
-
 #게시글 좋아요 생성
 @router.post("/{f_id}")
 async def router_forumlikes_create(f_id: int,

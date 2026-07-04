@@ -14,7 +14,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 # 1. 아이 정보 등록
 @router.post("/create", response_model=Baby_Read)
 async def routers_babies_create(baby:Baby_Create, u_id: int = Depends(auth_get_u_id),db:AsyncSession=Depends(get_db)):
-    db_data=await BabyService.service_babies_create(u_id, baby, db)
+    db_data=await BabyService.service_babies_create(db,u_id , baby)
     return db_data
 
 # 2. 아이 목록 조회

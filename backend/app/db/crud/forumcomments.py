@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from typing import Optional
 from app.db.models.forumcomments import ForumComment
 from app.db.scheme.forumcomments import ForumComment_Create, ForumComment_Update
@@ -15,13 +15,16 @@ class ForumComment_Crud:
 
         db.add(db_data)
         await db.flush()
-        return db_data
+        return await db.scalar(select(ForumComment).options(joinedload(ForumComment.user)).where(ForumComment.fc_id == db_data.fc_id))
     
     # 2. 댓글 조회
     @staticmethod
-    async def crud_forumcomments_list(db:AsyncSession, f_id:int) -> list[ForumComment]:
-        comment=(select(ForumComment).options(joinedload(ForumComment.user)).where(ForumComment.f_id==f_id).order_by(ForumComment.fc_id.asc()))
-        result=await db.execute(comment)
+    async def crud_forumcomments_list(db: AsyncSession, f_id: int) -> list[ForumComment]:
+        comment = (select(ForumComment).options(joinedload(ForumComment.user),
+                                                selectinload(ForumComment.comment_likes))
+                                                .where(ForumComment.f_id == f_id)
+                                                .order_by(ForumComment.fc_id.asc()))
+        result = await db.execute(comment)
         return list(result.scalars().all())
 
     # 3. 댓글 수정

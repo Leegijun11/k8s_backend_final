@@ -10,17 +10,16 @@ env:
   ECR_REPOSITORY: backend-ecr
   ECS_CLUSTER: backend-cluster
   ECS_SERVICE: backend-td-service
+  TASK_DEFINITION_FAMILY: backend-td
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. GitHub 코드를 가상 서버로 체크아웃
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. AWS 권한 인증
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -28,36 +27,46 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # 3. AWS ECR 레지스트리 로그인
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # 4. Docker 이미지 빌드 및 AWS ECR로 업로드 (오타 수정 완료)
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          # 고유 태그(IMAGE_TAG)와 최신 태그(latest)를 둘 다 붙여서 빌드
-          docker build \
-            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
-            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
-          
-          # 생성된 두 태그의 이미지를 모두 ECR에 푸시
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
         working-directory: ./backend
 
-      # 5. ECS 서비스 강제 업데이트
-      - name: Deploy to Amazon ECS Service
+      # 5. AWS에서 최신 태스크 정의 다운로드 후 JSON 정리
+      - name: Download and clean active task definition
         run: |
-          aws ecs update-service \
-            --cluster ${{ env.ECS_CLUSTER }} \
-            --service ${{ env.ECS_SERVICE }} \
-            --force-new-deployment
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.TASK_DEFINITION_FAMILY }} \
+            --query taskDefinition > temp-task-def.json
+          
+          # 액션이 읽을 수 있는 형태로 필수 필드만 추출
+          jq '{family, containerDefinitions, volumes, networkMode, executionRoleArn, taskRoleArn, cpu, memory, requiresCompatibilities}' temp-task-def.json > task-definition.json
 
-            
+      # 6. 이미지 경로 교체 (컨테이너 이름 backend-con 적용)
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: render-web-container
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: backend-con
+          image: ${{ steps.build-image.outputs.image }}
+
+      # 7. ECS 서비스 배포
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render-web-container.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true

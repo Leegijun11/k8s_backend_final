@@ -19,8 +19,9 @@ async def router_forumcomments_create(f_id: int,
 #댓글 조회
 @router.get("/list/{f_id}", response_model=list[ForumComment_Read])
 async def router_forumcomments_list(f_id: int,
+                                    u_id: int = Depends(auth_get_u_id),
                                     db: AsyncSession=Depends(get_db)):
-    return await ForumCommentService.service_forumcomments_list(db, f_id)
+    return await ForumCommentService.service_forumcomments_list(db, f_id, u_id)
 
 
 #댓글 수정
@@ -37,5 +38,7 @@ async def router_forumcomments_update(fc_id:int,
 async def router_forumcomments_delete(fc_id:int,
                                       u_id:int=Depends(auth_get_u_id),
                                       db:AsyncSession=Depends(get_db)):
-    return await ForumCommentService.service_forumcomments_delete(db, fc_id, u_id)
+    await ForumCommentService.service_forumcomments_delete(db, fc_id, u_id)
+
+    return {"message": "댓글이 정상적으로 삭제되었습니다."}
 

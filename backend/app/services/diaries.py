@@ -29,15 +29,30 @@ class Diary_Service:
                         status_code=status.HTTP_404_NOT_FOUND,
                         detail="해당 날짜의 이미지 정보가 없습니다"
                     )
-
+                
+                
                 llm_result = await ai_llm_run(log.l_content)
+                
+                d_word = llm_result.get("d_word", "")
+                target_words = [w.strip().lower() for w in d_word.split(",") if w.strip()]
+
+                d_image = None
+                for image in images:
+                    label = image.i_label.lower() if image.i_label else ""
+                    
+                    if any(word in label for word in target_words):
+                        d_image = image.i_image
+                        break
+                
+                if not d_image and images:
+                    d_image = images[0].i_image
 
                 diary_data = {
                     "d_title": f"{diary.d_date} ai 일기",
                     "d_content": llm_result.get("d_content"),
                     "d_label": llm_result.get("d_label"),
                     "d_date": diary.d_date,
-                    "d_image": images[0].i_image if images else None,  
+                    "d_image": d_image,  
                     "d_eat": llm_result.get("d_eat"),
                     "d_sleep": llm_result.get("d_sleep"),
                     "d_toilet": llm_result.get("d_toilet"),

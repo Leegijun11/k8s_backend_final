@@ -11,15 +11,27 @@ from sqlalchemy.future import select
 from app.db.scheme.forums import Forum_Create, Forum_Update
 from app.db.crud.forums import Forums_CRUD
 from app.db.crud.forumlikes import ForumLike
+from app.db.models.babies import Baby
+from app.db.models.babycharacters import BabyCharacter
+from app.db.crud.babies import Baby_Crud
 
+
+
+CHARACTER_MAP = {
+        "curiosity": "c_curiosity",
+        "active": "c_active",
+        "shy": "c_shy",
+        "eater": "c_eater",
+        "sleepy": "c_sleepy",
+        "charm": "c_charm"
+    }
 class Forum_Service:
     
     #게시물 작성
     @staticmethod
     async def service_forums_create(db: AsyncSession, forum_data:Forum_Create, u_id:int ):
         try:
-
-            new_forum=await Forums_CRUD.crud_forum_create(db, forum_data=forum_data, u_id=u_id)
+            new_forum = await Forums_CRUD.crud_forum_create(db, forum_data=forum_data, u_id=u_id)
             return new_forum
         
         except HTTPException:
@@ -31,17 +43,47 @@ class Forum_Service:
                 detail=f"게시글 작성 실패"
             )
 
-
-    #게시글 목록
+    #게시물 목록
     @staticmethod
-    async def service_forums_list(db:AsyncSession,
-                                  tag: str | None=None,
-                                  baby_character: str | None=None,
-                                  sort: str | None=None,
-                                  u_id: int | None=None):
+    async def service_forums_list(db: AsyncSession,
+                                  tag: str | None = None,
+                                  baby_character: str | None = None,
+                                  sort: str | None = None,
+                                  u_id: int | None = None,
+                                  b_id: int | None = None):
         try:
-            formus=await Forums_CRUD.crud_forum_list(db, tag=tag, baby_character=baby_character, sort=sort, u_id=u_id)
-            return formus
+            if baby_character == "my_baby":
+                if not u_id:
+                    raise HTTPException(status_code=400, detail="로그인이 필요합니다.")
+                
+                if b_id:
+                    target_id = b_id
+                else:
+                    babies = await Baby_Crud.crud_babies_list(db, u_id)
+                    if not babies:
+                        raise HTTPException(status_code=400, detail="등록된 아기 정보가 없습니다.")
+                    target_id = babies[0].b_id
+                
+                stmt = select(BabyCharacter).where(BabyCharacter.b_id == target_id)
+                result = await db.execute(stmt)
+                my_baby_char = result.scalar_one_or_none()
+
+                if not my_baby_char:
+                    raise HTTPException(status_code=400, detail="등록된 아기 기질 정보가 없습니다.")
+
+                # 활성화된 모든 기질을 리스트로 추출
+                active_chars = [key for key, field_name in CHARACTER_MAP.items() 
+                                if getattr(my_baby_char, field_name) == 1]
+                
+                baby_character = active_chars if active_chars else None
+
+            forums = await Forums_CRUD.crud_forum_list(
+                db, tag=tag, baby_character=baby_character, sort=sort, u_id=u_id
+            )
+            return forums
+
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
