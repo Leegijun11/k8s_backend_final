@@ -26,13 +26,20 @@ class User_Service:
     @staticmethod
     async def services_user_create(db: AsyncSession, user: User_Create):
         try:
-            #중복 확인
-            registered_user=await User_Crud.crud_users_u_account_by_udata(db, u_name=user.u_name, u_email=user.u_email, u_phone=user.u_phone)
-            if registered_user:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST, 
-                    detail="이미 등록된 회원 정보"
-                )
+            #아이디 중복 확인
+            existing_account = await User_Crud.crud_users_get_by_account(db, user.u_account)
+            if existing_account:
+               raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="이미 사용중인 아이디입니다.")
+            
+            #이메일/전화번호 중복 확인
+            existing_email = await User_Crud.crud_users_get_by_email(db, user.u_email)
+            if existing_email:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="이미 사용중인 이메일입니다.")
+                
+            #전화번호 중복 확인
+            existing_phone = await User_Crud.crud_users_get_by_phone(db, user.u_phone)
+            if existing_phone:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="이미 사용중인 전화번호입니다.")
             
             hashed_pw=get_password_hash(user.u_pw)
 
@@ -62,6 +69,12 @@ class User_Service:
                 status_code=status.HTTP_400_BAD_REQUEST, 
                 detail=f"회원가입 실패: {e}"  
             )
+        
+    #아이디 중복검사
+    @staticmethod
+    async def service_users_check_account(db: AsyncSession, u_account: str):
+        existing = await User_Crud.crud_users_get_by_account(db, u_account)
+        return {"available": existing is None}
         
         
 

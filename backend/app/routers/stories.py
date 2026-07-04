@@ -52,7 +52,7 @@ async def router_stories_pages_detail(sp_id : int, db: AsyncSession = Depends(ge
     return await Story_Service.service_stories_pages_detail(db, sp_id)
 
 # 디지털북 페이지 삭제
-@router.get('/page/del')
+@router.delete('/page/del')
 async def router_stories_pages_del(sp_id : int, db: AsyncSession = Depends(get_db)):
     return await Story_Service.service_stories_pages_del(db, sp_id)
 

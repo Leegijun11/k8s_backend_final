@@ -1,4 +1,4 @@
-import os  # 절대 경로 처리를 위해 추가
+import os
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
@@ -8,6 +8,8 @@ from app.core.scheduler import start_scheduler
 from app.db.database import async_engine, Base
 from app.db.models.milestones import Milestone
 from app.db.models.babymilestones import BabyMilestone
+# ★ 표준 모델 테이블 싱크를 위해 임포트 (기존 임포트 하단에 추가)
+from app.db.models.standards import BabyStandard 
 
 # Models
 from app.db.models.alarms import Alarm
@@ -28,7 +30,8 @@ from app.db.models.forumcommentlikes import ForumCommentLike
 from app.routers import (
     babyimages, babies, babycharacters, record, 
     users, tips, logs, parent, alarm, diaries, stories,
-    milestones, forum, forumlikes, forumcomments, forumcommentlikes, health
+    forum, forumlikes, forumcomments, forumcommentlikes, health,
+    milestones, health, standards  # ★ standards 라우터 추가
 )
 
 
@@ -59,6 +62,7 @@ app.add_middleware(
 async def root():
     return {"message": "home"}
 
+# 라우터 등록
 app.include_router(health.router)
 app.include_router(users.router)
 app.include_router(parent.router)
@@ -76,15 +80,23 @@ app.include_router(forumlikes.router)
 app.include_router(milestones.router)
 app.include_router(forumcomments.router)
 app.include_router(forumcommentlikes.router)
+app.include_router(standards.router)  # ★ standards 라우터 추가
 
 # app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 # # uvicorn main:app --reload
 
-# --- 정적 파일 절대 경로 설정 추가 ---
-# 현재 main.py 파일이 있는 위치의 절대 경로를 구합니다.
+# --- 정적 파일(Static Files) 설정 ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# main.py와 같은 위치에 있는 'uploads' 폴더의 전체 경로를 만듭니다.
-UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 
-# directory 옵션에 계산된 절대 경로(UPLOAD_DIR)를 대입합니다.
+# 1. 기존 uploads 폴더 마운트
+UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+
+# 2. 상위 폴더의 실제 아기 사진 images 폴더 마운트 (완벽함!)
+PARENT_DIR = os.path.dirname(BASE_DIR)
+IMAGES_DIR = os.path.join(PARENT_DIR, "images")
+
+if not os.path.exists(IMAGES_DIR):
+    os.makedirs(IMAGES_DIR)
+
+app.mount("/images", StaticFiles(directory=IMAGES_DIR), name="images")

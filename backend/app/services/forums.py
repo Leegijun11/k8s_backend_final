@@ -29,8 +29,13 @@ class Forum_Service:
     
     #게시물 작성
     @staticmethod
-    async def service_forums_create(db: AsyncSession, forum_data:Forum_Create, u_id:int ):
+    async def service_forums_create(db: AsyncSession, forum_data: Forum_Create, u_id: int):
         try:
+            if forum_data.b_id is None:
+                babies = await Baby_Crud.crud_babies_list(db, u_id)
+                if babies and len(babies) > 0:
+                    forum_data.b_id = babies[0].b_id
+            
             new_forum = await Forums_CRUD.crud_forum_create(db, forum_data=forum_data, u_id=u_id)
             return new_forum
         
@@ -40,7 +45,7 @@ class Forum_Service:
             await db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"게시글 작성 실패"
+                detail=f"게시글 작성 실패: {str(e)}"
             )
 
     #게시물 목록
