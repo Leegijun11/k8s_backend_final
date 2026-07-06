@@ -3,6 +3,7 @@ from sqlalchemy.future import select
 from datetime import date
 from app.db.models.stories import Story
 from app.db.models.diaries import Diary
+from app.db.scheme.stories import Story_Update
 
 
 class Story_Crud:
@@ -40,6 +41,26 @@ class Story_Crud:
             select(Story).filter(Story.s_id == s_id)
         )
         return result.scalars().first()
+    
+
+    # 디지털북 정보 수정
+    @staticmethod
+    async def crud_stories_update(db:AsyncSession,
+                                  s_id:int,
+                                  data:Story_Update) -> Story | None:
+        db_data=await db.get(Story, s_id)
+        
+        if db_data:           
+            update_data= data.model_dump(exclude_unset=True)
+
+            for key, value in update_data.items():
+                setattr(db_data, key, value)
+
+            await db.flush()
+            return db_data
+            
+        return None
+
 
     # 디지털북 삭제
     @staticmethod

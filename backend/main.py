@@ -1,3 +1,4 @@
+import os  # 절대 경로 처리를 위해 추가
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
@@ -11,7 +12,7 @@ from app.db.models.babymilestones import BabyMilestone
 from app.routers import (
     babyimages, babies, babycharacters, record, 
     users, tips, logs, parent, alarm, diaries, stories,
-    milestones
+    milestones, health
 )
 
 
@@ -20,7 +21,7 @@ async def lifespan(app: FastAPI):
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    start_scheduler()   # 서버 시작 시 스케줄러도 같이 시작
+    start_scheduler()  
 
     yield
     await async_engine.dispose()
@@ -42,7 +43,7 @@ app.add_middleware(
 async def root():
     return {"message": "home"}
 
-# Router 등록
+app.include_router(health.router)
 app.include_router(users.router)
 app.include_router(parent.router)
 app.include_router(tips.router)
@@ -56,4 +57,12 @@ app.include_router(diaries.router)
 app.include_router(stories.router)
 app.include_router(milestones.router)
 
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+# --- 정적 파일 절대 경로 설정 추가 ---
+# 현재 main.py 파일이 있는 위치의 절대 경로를 구합니다.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# main.py와 같은 위치에 있는 'uploads' 폴더의 전체 경로를 만듭니다.
+UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
+
+# directory 옵션에 계산된 절대 경로(UPLOAD_DIR)를 대입합니다.
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
