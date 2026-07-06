@@ -14,7 +14,7 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(CURRENT_DIR, "baby_resnet50_all_layers.pth")
 
-CLASS_NAMES = ["눕다","터미타임","뒤집다","앉다","기다","서다","걷다","기어오르다","손동작","놀이","독서","상호작용","식사","위생","수면"]
+CLASS_NAMES = ["눕기","터미타임","뒤집기","앉기","기기","서기","걷기","기어오르기","손동작","놀이","독서","상호작용","식사","위생","수면"]
 
 # ==========================================
 # 2. 이미지 전처리 정의

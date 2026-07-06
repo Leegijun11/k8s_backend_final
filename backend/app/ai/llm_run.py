@@ -43,6 +43,7 @@ async def ai_llm_run(input_data: str):
                         "시간": r'"시간"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
                         "체온": r'"체온"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
                         "육아범주": r'"육아범주"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
+                        "주요라벨": r'"주요라벨"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
                         "마일스톤": r'"마일스톤"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?'
                     }
 
@@ -59,7 +60,7 @@ async def ai_llm_run(input_data: str):
         merged_labels = {
             "핵심어": [], "부모감정": [], "아이감정": [], 
             "식사": [], "배변": [], "수면": [], "시간": [], "체온": [], 
-            "육아범주": [], "마일스톤":[]
+            "육아범주": [], "주요라벨":[], "마일스톤":[]
         }
 
         for idx, label_dict in enumerate(label_list):
@@ -169,6 +170,7 @@ async def ai_llm_run(input_data: str):
             "시간": ", ".join(dict.fromkeys(merged_labels["시간"])) if merged_labels["시간"] else "없음",
             "체온": clean_temp_format(merged_labels["체온"], input_data),
             "육아범주": ", ".join(dict.fromkeys(merged_labels["육아범주"])) if merged_labels["육아범주"] else "건강",
+            "주요라벨": ", ".join(dict.fromkeys(merged_labels["주요라벨"])) if merged_labels["주요라벨"] else "없음",
             "마일스톤": ", ".join(dict.fromkeys(merged_labels["마일스톤"])) if merged_labels["마일스톤"] else "없음"
         }
 
@@ -182,6 +184,7 @@ async def ai_llm_run(input_data: str):
             f"배변: {labels['배변']}\n"
             f"체온: {labels['체온']}\n"
             f"육아범주: {labels['육아범주']}\n"
+            f"주요라벨: {labels['주요라벨']}\n"
             f"마일스톤: {labels['마일스톤']}"
         )
 
@@ -203,6 +206,7 @@ async def ai_llm_run(input_data: str):
             "d_sleep": labels["수면"],
             "d_toilet": labels["배변"],
             "d_temp": labels["체온"],
+            "d_i_label": labels["주요라벨"],
             "d_mile": labels["마일스톤"],
             "d_content": final_diary.strip()
         }
@@ -238,6 +242,7 @@ async def loop_test():
         print("체온:", ai['d_temp'])
         print("마일스톤:", ai['d_mile'])
         print("일기:\n", ai['d_content'])
+        print("주요라벨", ai["d_i_label"])
         
         print("\n" + "="*40 + "\n")
 
