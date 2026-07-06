@@ -14,23 +14,7 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(CURRENT_DIR, "baby_resnet50_all_layers.pth")
 
-CLASS_NAMES = [
-    "01 lying (눕기)",
-    "02 tummyTime (터미타임)",
-    "03 rolling (뒤집기)",
-    "04 sitting (앉기)",
-    "05 crawling (기기)",
-    "06 standing (잡고서기)",
-    "07 walking (독립보행달리기)",
-    "08 climbing (기어오르기)",
-    "09 handManipulation (손동작)",
-    "10 playActivity (오감인지 놀이)",
-    "11 reading (독서)",
-    "12 interacting (상호작용,사회적관계)",
-    "13 diet (구강 섭취식사)",
-    "14 hygiene (위생케어)",
-    "15 sleeping (수면하품)"
-]
+CLASS_NAMES = ["눕기","터미타임","뒤집기","앉기","기기","서기","걷기","기어오르기","손동작","놀이","독서","상호작용","식사","위생","수면"]
 
 # ==========================================
 # 2. 이미지 전처리 정의
