@@ -43,8 +43,8 @@ class Diary_Service:
                         d_image = image.i_image
                         break
                 
-                if not d_image and images:
-                    d_image = images[0].i_image
+                    if not d_image and images:
+                        d_image = images[0].i_image
 
                 # ★ [변경 포인트] images/ -> uploads/ 기준으로 경로 자르기 (AI 생성)
                 if d_image:
