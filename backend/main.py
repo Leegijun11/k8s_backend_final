@@ -25,15 +25,14 @@ from app.db.models.forumlikes import ForumLike
 from app.db.models.forumtags import ForumTag
 from app.db.models.forumcomments import ForumComment
 from app.db.models.forumcommentlikes import ForumCommentLike
-# Routers
 
+# Routers
 from app.routers import (
     babyimages, babies, babycharacters, record, 
     users, tips, logs, parent, alarm, diaries, stories,
     forum, forumlikes, forumcomments, forumcommentlikes, health,
-    milestones, health, standards  # ★ standards 라우터 추가
+    milestones, standards  # ★ standards 라우터 추가
 )
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -45,9 +44,7 @@ async def lifespan(app: FastAPI):
     yield
     await async_engine.dispose()
 
-
 app = FastAPI(title="Backend API", lifespan=lifespan)
-
 
 # CORS 설정
 app.add_middleware(
@@ -82,17 +79,14 @@ app.include_router(forumcomments.router)
 app.include_router(forumcommentlikes.router)
 app.include_router(standards.router)  # ★ standards 라우터 추가
 
-# app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
-# # uvicorn main:app --reload
-
 # --- 정적 파일(Static Files) 설정 ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# 1. 기존 uploads 폴더 마운트
+# 1. 기존 uploads 폴더 마운트 (접근 주소: /uploads/...)
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
-# 2. 상위 폴더의 실제 아기 사진 images 폴더 마운트 (완벽함!)
+# 2. 상위 폴더의 실제 아기 사진 images 폴더 마운트 (접근 주소: /images/...)
 PARENT_DIR = os.path.dirname(BASE_DIR)
 IMAGES_DIR = os.path.join(PARENT_DIR, "images")
 
