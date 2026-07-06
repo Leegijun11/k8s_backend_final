@@ -72,9 +72,6 @@ class Forum_Service:
                 stmt = select(BabyCharacter).where(BabyCharacter.b_id == target_id)
                 result = await db.execute(stmt)
                 my_baby_char = result.scalar_one_or_none()
-
-                if not my_baby_char:
-                    raise HTTPException(status_code=400, detail="등록된 아기 기질 정보가 없습니다.")
                 
                 active_chars = [key for key, field_name in CHARACTER_MAP.items() 
                                 if getattr(my_baby_char, field_name)]

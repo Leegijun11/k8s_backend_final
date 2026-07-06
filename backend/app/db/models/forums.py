@@ -19,13 +19,13 @@ class Forums(Base):
     __tablename__ = 'forums'
 
 
-    f_id: Mapped[int] = mapped_column(primary_key=True)
-    u_id: Mapped[int] = mapped_column(ForeignKey('users.u_id'), nullable=False)
+    f_id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    u_id: Mapped[int] = mapped_column(ForeignKey('users.u_id', ondelete="CASCADE"), nullable=False)
     
     f_title: Mapped[str] = mapped_column(String(255), nullable=False)
     f_content: Mapped[str] = mapped_column(Text, nullable=False)
 
-    f_image: Mapped[Optional[str]] = mapped_column(String(500), nullable=True) # 이미지 URL 길이를 고려해 500 권장
+    f_image: Mapped[Optional[str]] = mapped_column(String(500), nullable=True) 
     
     f_like_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
@@ -37,9 +37,9 @@ class Forums(Base):
 
     forum_tag: Mapped["ForumTag"] = relationship("ForumTag", back_populates="forum", cascade="all, delete-orphan")
 
-    b_id: Mapped[Optional[int]]=mapped_column(ForeignKey('babies.b_id', ondelete="SET NULL"), nullable=True)
+    b_id: Mapped[Optional[int]]=mapped_column(ForeignKey('babies.b_id', ondelete="CASCADE"), nullable=True)
 
     baby: Mapped[Optional["Baby"]] = relationship("Baby", back_populates="forums")
-    forum_likes: Mapped[List["ForumLike"]] = relationship("ForumLike", back_populates="forum", cascade="all, delete-orphan")
+    forum_likes: Mapped[List["ForumLike"]] = relationship("ForumLike", back_populates="forum", cascade="all, delete-orphan", overlaps="likes")
 
     comments: Mapped[list["ForumComment"]] = relationship("ForumComment", back_populates="forum", cascade="all, delete-orphan")

@@ -18,7 +18,8 @@ from app.core.auth import set_auth_cookies, auth_get_u_id
 from app.core.jwt_handle import create_access_token, create_refresh_token
 from app.core.settings import Settings
 from app.core.mail import generate_verification_code, send_verification_email_async
-
+from app.db.models.forums import Forums
+from sqlalchemy import delete
 
 class User_Service:
 
@@ -150,11 +151,6 @@ class User_Service:
         
 
 
-        except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-                                detail=f" 다른 유저 정보중 에러 발생: {e}")
-        
-        
     # 아이디(u_account)로 유저 검색
     @staticmethod
     async def service_users_search(db: AsyncSession, u_account: str):
@@ -305,6 +301,8 @@ class User_Service:
     @staticmethod
     async def service_users_delete(db:AsyncSession, u_id:int):
         try:
+            await db.execute(delete(Forums).where(Forums.u_id==u_id))
+
             delete_user=await User_Crud.crud_users_del(db, u_id)
 
             if not delete_user:
@@ -319,6 +317,7 @@ class User_Service:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"정보 삭제에 실패했습니다{e}"
             )
+        
         
     #다른 유저 정보
     @staticmethod

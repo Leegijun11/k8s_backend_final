@@ -20,7 +20,7 @@ class ForumCommentLike(Base):
     
     fc_id: Mapped[int] = mapped_column(ForeignKey('forumcomments.fc_id', ondelete="CASCADE"), nullable=False)
   
-    u_id: Mapped[int] = mapped_column(ForeignKey('users.u_id'), nullable=False)
-
+    u_id: Mapped[int] = mapped_column(ForeignKey('users.u_id', ondelete="CASCADE"), nullable=False)
+    
     comment: Mapped["ForumComment"] = relationship("ForumComment", back_populates="comment_likes")
     user: Mapped["User"] = relationship("User", back_populates="forum_comment_likes")

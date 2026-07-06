@@ -24,7 +24,7 @@ class ForumLike(Base):
     
     # 원본 글 삭제 시 좋아요도 자동 삭제되도록 ondelete="CASCADE" 설정
     f_id: Mapped[int] = mapped_column(ForeignKey('forums.f_id', ondelete="CASCADE"), nullable=False)
-    u_id: Mapped[int] = mapped_column(ForeignKey('users.u_id'), nullable=False)
+    u_id: Mapped[int] = mapped_column(ForeignKey('users.u_id', ondelete="CASCADE"), nullable=False)
 
     # 관계(Relationship) 설정
     forum: Mapped["Forums"] = relationship("Forums", back_populates="likes")
