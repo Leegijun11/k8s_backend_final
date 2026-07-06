@@ -39,6 +39,7 @@ class Diary_List_Item(BaseModel):
     d_content: str
     d_label: str
     d_date: date
+    d_image: Optional[str] = None
     d_eat: Optional[str] = None
     d_sleep: Optional[str] = None
     d_toilet: Optional[str] = None
@@ -53,6 +54,7 @@ class Diary_Detail(BaseModel):
     d_content: str
     d_label: str
     d_date: date
+    d_image: Optional[str] = None
     d_eat: Optional[str] = None
     d_sleep: Optional[str] = None
     d_toilet: Optional[str] = None

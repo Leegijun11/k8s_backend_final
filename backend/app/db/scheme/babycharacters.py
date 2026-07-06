@@ -11,7 +11,6 @@ class BabyCharacter_Base(BaseModel):
     c_sleepy: bool
     c_charm: bool
 
-
     model_config = ConfigDict(from_attributes=True)
 
 

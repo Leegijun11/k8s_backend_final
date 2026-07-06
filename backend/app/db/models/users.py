@@ -9,6 +9,10 @@ if TYPE_CHECKING:
     from app.db.models.parents import Parent
     from app.db.models.babies import Baby
     from app.db.models.alarms import Alarm
+    from app.db.models.forums import Forums
+    from app.db.models.forumlikes import ForumLike
+    from app.db.models.forumcomments import ForumComment
+    from app.db.models.forumcommentlikes import ForumCommentLike
 
 class User(Base):
     __tablename__ = 'users'
@@ -29,3 +33,9 @@ class User(Base):
     subs: Mapped[List["Parent"]] = relationship("Parent", back_populates="user")
     sent_alarms: Mapped[List["Alarm"]] = relationship("Alarm", foreign_keys="[Alarm.send_id]", back_populates="sender")
     received_alarms: Mapped[List["Alarm"]] = relationship("Alarm", foreign_keys="[Alarm.receive_id]",  back_populates="receiver")
+
+    forums: Mapped[List["Forums"]] = relationship("Forums", back_populates="user")
+    forum_likes: Mapped[List["ForumLike"]] = relationship("ForumLike", back_populates="user", cascade="all, delete-orphan")
+
+    forum_comments: Mapped[list["ForumComment"]] = relationship("ForumComment", back_populates="user", cascade="all, delete-orphan")
+    forum_comment_likes: Mapped[list["ForumCommentLike"]] = relationship("ForumCommentLike", back_populates="user", cascade="all, delete-orphan")

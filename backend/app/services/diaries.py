@@ -1,5 +1,3 @@
-#service_diaries_create : 일기 생성
-
 from fastapi import status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.scheme.diaries import Diary_Create, Diary_Update
@@ -38,6 +36,7 @@ class Diary_Service:
 
                 target_words = [w.strip().lower() for w in d_word.split(",") if w.strip()]
 
+                # 매칭되는 이미지 찾기
                 d_image = None
 
                 for image in images:
@@ -59,13 +58,18 @@ class Diary_Service:
                 if not d_image and images:
                     d_image = images[0].i_image
 
-                print(d_image)
+                # ★ [변경 포인트] images/ -> uploads/ 기준으로 경로 자르기 (AI 생성)
+                if d_image:
+                    d_image = d_image.replace("\\", "/")
+                    if "uploads/" in d_image:
+                        d_image = "uploads/" + d_image.split("uploads/", 1)[1]
+
                 diary_data = {
                     "d_title": f"{diary.d_date} ai 일기",
                     "d_content": llm_result.get("d_content"),
                     "d_label": llm_result.get("d_label"),
                     "d_date": diary.d_date,
-                    "d_image": d_image,  
+                    "d_image": d_image,  # 가공된 깨끗한 상대 경로(uploads/...)가 들어감
                     "d_eat": llm_result.get("d_eat"),
                     "d_sleep": llm_result.get("d_sleep"),
                     "d_toilet": llm_result.get("d_toilet"),
@@ -76,7 +80,15 @@ class Diary_Service:
                 new_diary = await Diary_Crud.crud_diaries_create(db, diary_data)
             
             else:
-                user_diary_data = diary.model_dump() 
+                # 사용자가 직접 작성하는 경우 (ai_create=False)
+                user_diary_data = diary.model_dump()
+                
+                # ★ [변경 포인트] images/ -> uploads/ 기준으로 경로 자르기 (수동 생성)
+                if user_diary_data.get("d_image"):
+                    img_path = user_diary_data["d_image"].replace("\\", "/")
+                    if "uploads/" in img_path:
+                        user_diary_data["d_image"] = "uploads/" + img_path.split("uploads/", 1)[1]
+                        
                 new_diary = await Diary_Crud.crud_diaries_create(db, user_diary_data)
 
             await db.commit()
@@ -118,7 +130,6 @@ class Diary_Service:
                 detail=f"일기를 불러오는데 실패했습니다: {e}"
             )
         
-
     # 일기 상세
     @staticmethod
     async def service_diaries_detail(db: AsyncSession, d_id: int):
@@ -147,6 +158,12 @@ class Diary_Service:
     async def service_diaries_update(db: AsyncSession, d_id: int, update_diary: Diary_Update):
         try:
             update_data = update_diary.model_dump(exclude_unset=True)
+
+            # ★ [변경 포인트] images/ -> uploads/ 기준으로 경로 자르기 (일기 수정)
+            if update_data.get("d_image"):
+                img_path = update_data["d_image"].replace("\\", "/")
+                if "uploads/" in img_path:
+                    update_data["d_image"] = "uploads/" + img_path.split("uploads/", 1)[1]
 
             updated_diary = await Diary_Crud.crud_diaries_update(db, d_id, update_data)
 

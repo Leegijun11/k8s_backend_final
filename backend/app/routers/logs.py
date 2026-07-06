@@ -1,13 +1,8 @@
 from fastapi import APIRouter, Depends, status
-
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.db.database import get_db
-
 from app.db.scheme.logs import Log_Create, Log_Read
-
 from app.services.logs import Log_Service
-
 
 router=APIRouter(prefix='/logs',tags=['Log'])
 
