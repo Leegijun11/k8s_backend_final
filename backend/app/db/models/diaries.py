@@ -7,6 +7,7 @@ from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.db.models.babies import Baby
+    from app.db.models.babymilestones import BabyMilestone
 
 class Diary(Base):
     __tablename__ = 'diaries'
@@ -26,3 +27,4 @@ class Diary(Base):
     b_id: Mapped[int] = mapped_column(ForeignKey('babies.b_id', ondelete="CASCADE"), nullable=False)
     
     baby: Mapped["Baby"] = relationship("Baby", back_populates="diaries")
+    milestone: Mapped["BabyMilestone"] = relationship("BabyMilestone", back_populates="diary")
