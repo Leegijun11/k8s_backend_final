@@ -31,22 +31,35 @@ class Diary_Service:
                     )
                 
                 
-                llm_result = await ai_llm_run(log.l_content)
-                
+                labels_config = ["눕다", "터미타임", "뒤집다", "앉다", "기다", "서다", "걷다", "기어오르다", "손동작", "놀이", "독서", "상호작용", "식사", "위생", "수면"]
+
+                llm_result = await ai_llm_run(log.l_content) or {}
                 d_word = llm_result.get("d_word", "")
+
                 target_words = [w.strip().lower() for w in d_word.split(",") if w.strip()]
 
                 d_image = None
+
                 for image in images:
-                    label = image.i_label.lower() if image.i_label else ""
+                    label = (image.i_label or "").strip().lower()
                     
-                    if any(word in label for word in target_words):
+                    if label not in labels_config:
+                        continue
+                
+                    stem = label[:-1] if label.endswith("다") else label
+                    if label == "기어오르다":
+                        stem = "기어오르"
+
+                    is_matched = any(stem in target for target in target_words)
+                    
+                    if is_matched:
                         d_image = image.i_image
                         break
-                
+                        
                 if not d_image and images:
                     d_image = images[0].i_image
 
+                print(d_image)
                 diary_data = {
                     "d_title": f"{diary.d_date} ai 일기",
                     "d_content": llm_result.get("d_content"),
