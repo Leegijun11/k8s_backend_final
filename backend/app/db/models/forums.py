@@ -40,6 +40,6 @@ class Forums(Base):
     b_id: Mapped[Optional[int]]=mapped_column(ForeignKey('babies.b_id', ondelete="SET NULL"), nullable=True)
 
     baby: Mapped[Optional["Baby"]] = relationship("Baby", back_populates="forums")
-    forum_likes: Mapped[List["ForumLike"]] = relationship("ForumLike", back_populates="forum", cascade="all, delete-orphan")
+    forum_likes: Mapped[List["ForumLike"]] = relationship("ForumLike", back_populates="forum", cascade="all, delete-orphan", overlaps="likes")
 
     comments: Mapped[list["ForumComment"]] = relationship("ForumComment", back_populates="forum", cascade="all, delete-orphan")
