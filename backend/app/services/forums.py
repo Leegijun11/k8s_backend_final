@@ -73,11 +73,14 @@ class Forum_Service:
                 result = await db.execute(stmt)
                 my_baby_char = result.scalar_one_or_none()
                 
+                if not my_baby_char:
+                    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="아기의 성격이 아직 등록 되지 않았습니다")
+
                 active_chars = [key for key, field_name in CHARACTER_MAP.items() 
                                 if getattr(my_baby_char, field_name)]
                 
                 if not active_chars:
-                    raise HTTPException(status_code=400, detail="아기의 성격(기질)이 하나도 등록되지 않았습니다. 마이페이지에서 성격을 등록해주세요.")
+                    raise HTTPException(status_code=400, detail="아기의 성격이 하나도 등록되지 않았습니다")
                 
                 baby_character = active_chars
 
