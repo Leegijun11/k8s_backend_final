@@ -28,7 +28,6 @@ class Diary_Service:
                         detail="해당 날짜의 이미지 정보가 없습니다"
                     )
                 
-                
                 llm_result = await ai_llm_run(log.l_content)
                 d_i_label = llm_result.get("d_i_label", "")
 

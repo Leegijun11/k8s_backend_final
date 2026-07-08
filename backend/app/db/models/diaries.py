@@ -1,5 +1,4 @@
 from app.db.database import Base
-
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, TIMESTAMP, func, ForeignKey
 from datetime import datetime

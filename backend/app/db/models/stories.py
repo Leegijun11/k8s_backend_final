@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 class Story(Base):
     __tablename__ = 'stories'
 
+    u_id: Mapped[int] = mapped_column(ForeignKey('users.u_id', ondelete="CASCADE"), nullable=False)
     s_id: Mapped[int] = mapped_column(primary_key=True)
     s_name: Mapped[str] = mapped_column(String(100), nullable=False)
     b_id: Mapped[int] = mapped_column(ForeignKey('babies.b_id', ondelete="CASCADE"), nullable=False)

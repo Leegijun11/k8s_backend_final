@@ -18,7 +18,7 @@ class Parent(Base):
     p_state: Mapped[str] = mapped_column(String(100), nullable=False)
 
     g_id: Mapped[Optional[int]] = mapped_column(ForeignKey('care_groups.g_id'), nullable=True)
-    u_id: Mapped[int] = mapped_column(ForeignKey('users.u_id'), nullable=False)
+    u_id: Mapped[int] = mapped_column(ForeignKey('users.u_id', ondelete="CASCADE"), nullable=False)
     
     current_b_id: Mapped[Optional[int]] = mapped_column(ForeignKey('babies.b_id', ondelete="SET NULL"), nullable=True)
 

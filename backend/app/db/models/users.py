@@ -30,11 +30,11 @@ class User(Base):
     
     refresh_token: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     
-    subs: Mapped[List["Parent"]] = relationship("Parent", back_populates="user")
+    subs: Mapped[List["Parent"]] = relationship("Parent", back_populates="user", cascade="all, delete-orphan")
     sent_alarms: Mapped[List["Alarm"]] = relationship("Alarm", foreign_keys="[Alarm.send_id]", back_populates="sender")
     received_alarms: Mapped[List["Alarm"]] = relationship("Alarm", foreign_keys="[Alarm.receive_id]",  back_populates="receiver")
 
-    forums: Mapped[List["Forums"]] = relationship("Forums", back_populates="user")
+    forums: Mapped[List["Forums"]] = relationship("Forums", back_populates="user", cascade="all, delete-orphan")
     forum_likes: Mapped[List["ForumLike"]] = relationship("ForumLike", back_populates="user", cascade="all, delete-orphan")
 
     forum_comments: Mapped[list["ForumComment"]] = relationship("ForumComment", back_populates="user", cascade="all, delete-orphan")

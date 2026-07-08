@@ -14,7 +14,7 @@ class ForumComment(Base):
 
     fc_id: Mapped[int] = mapped_column(primary_key=True)
     f_id: Mapped[int] = mapped_column(ForeignKey('forums.f_id', ondelete="CASCADE"), nullable=False)
-    u_id: Mapped[int] = mapped_column(ForeignKey('users.u_id'), nullable=False)
+    u_id: Mapped[int] = mapped_column(ForeignKey('users.u_id', ondelete="CASCADE"), nullable=False)
     fc_content: Mapped[str] = mapped_column(String(500), nullable=False)
 
     fc_like_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
