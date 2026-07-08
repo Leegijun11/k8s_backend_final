@@ -58,5 +58,15 @@ class BabyImage_Crud:
             await db.flush()
             return db_data
         return None
+    
+
+    
+
+    #갤러리용 전체 사진 목록
+    @staticmethod
+    async def crud_babyimages_list_all(db: AsyncSession, b_id:int) -> list[BabyImage]:
+        result=await db.execute(select(BabyImage).where(BabyImage.b_id==b_id).order_by(BabyImage.i_date.desc()))
+
+        return list(result.scalars().all())
   
 

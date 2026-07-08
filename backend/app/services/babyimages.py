@@ -135,3 +135,10 @@ class BabyImage_Service:
             await db.rollback()
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
                                 detail=f"다중 삭제 실패: {e}")
+
+    
+    #갤러리용(전체 사진 목록)
+    @staticmethod
+    async def services_babyimages_list_all(db: AsyncSession, b_id: int) -> list[BabyImage_Read]:
+        data = await BabyImage_Crud.crud_babyimages_list_all(db, b_id)
+        return [BabyImage_Read.model_validate(item) for item in data]
