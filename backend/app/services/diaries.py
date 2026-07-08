@@ -2,6 +2,7 @@ from fastapi import status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.scheme.diaries import Diary_Create, Diary_Update
 from app.db.crud.diaries import Diary_Crud
+from app.db.crud.babies import Baby_Crud
 from app.ai.llm_run import ai_llm_run
 from datetime import date
 
@@ -28,15 +29,21 @@ class Diary_Service:
                         detail="해당 날짜의 이미지 정보가 없습니다"
                     )
                 
+                b_date = await Baby_Crud.crud_babies_detail(db, diary.b_id)
                 
-                llm_result = await ai_llm_run(log.l_content)
+                
+                llm_result = await ai_llm_run(log.l_content, b_date.b_birth)
                 d_i_label = llm_result.get("d_i_label", "")
 
-                d_image = None
+                print(d_i_label)
+                clean_labels = [lbl.strip() for lbl in d_i_label.split(",")]
+
                 for image in images:
-                    label = (image.i_label or "").strip().lower()
-                    if label == d_i_label:
+                    label = (image.i_label or "").strip()
+                   
+                    if label in clean_labels:
                         d_image = image.i_image
+                        print(d_image)
                         break
 
 
