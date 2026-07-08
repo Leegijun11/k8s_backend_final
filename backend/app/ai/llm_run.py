@@ -43,7 +43,7 @@ async def ai_llm_run(input_data: str):
                         "시간": r'"시간"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
                         "체온": r'"체온"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
                         "육아범주": r'"육아범주"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
-                        "주요라벨": r'"주요라벨"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
+                        "사진라벨": r'"사진라벨"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
                         "마일스톤": r'"마일스톤"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?'
                     }
 
@@ -60,7 +60,7 @@ async def ai_llm_run(input_data: str):
         merged_labels = {
             "핵심어": [], "부모감정": [], "아이감정": [], 
             "식사": [], "배변": [], "수면": [], "시간": [], "체온": [], 
-            "육아범주": [], "주요라벨":[], "마일스톤":[]
+            "육아범주": [], "사진라벨":[], "마일스톤":[]
         }
 
         for idx, label_dict in enumerate(label_list):
@@ -124,6 +124,14 @@ async def ai_llm_run(input_data: str):
         clean_p_emotions = sorted(list(set([e for e in merged_labels["부모감정"] if e in valid_p_emotions])))
         clean_b_emotions = sorted(list(set([e for e in merged_labels["아이감정"] if e in valid_b_emotions])))
 
+
+
+        image_label = ["눕기", "터미타임", "뒤집기", "앉기", "기기", "서기", "걷기", "기어오르기", "손동작", "놀이", "독서", "상호작용", "식사", "위생", "수면"]
+        milestone_label = ["모로 반사", "주먹 쥐기", "수유 빨기 반사", "달래기", "사회적 미소", "눈맞춤", "옹알이", "손가락 폄", "터미타임", "물건 향해 손 뻗기", "소리 내어 웃기", "거울 반응", "뒤집기", "침 흘리기", "구강기 탐색", "기대어 앉기", "이앓이 통증", "배밀이", "혼자 앉기", "이름 반응", "낯가림", "음절 옹알이", "물건 두드리기", "잡고 일어서기", "네발 기기", "대상 영속성", "짝짜꿍 시작", "꽃게 걸음", "손가락 가리키기", "의미 있는 첫 단어", "간단한 지시 수행", "집게 손가락 집기", "혼자 서기", "타인과의 상호작용", "도리도리/고집 표현", "걸음마", "도구 사용", "신체 부위 가리키기", "개인기", "신발/양말 벗기", "계단 오르기", "곁에서 따로 놀기", "문장 표현 및 언어 폭발", "요청한 물건 가져오기", "낙서하기", "혼자 배변", "세 단어 문장 구사", "역할극", "스스로 옷 입기", "10까지 세기", "세발자전거 페달 밟기", "한 발로 뛰기", "도형 그리기", "차례 지키기 및 공유", "성별 및 나이 인지"]
+
+        clean_image_labels = sorted(list(set([e for e in merged_labels["사진라벨"] if e in image_label])))
+        clean_milestone_labels = sorted(list(set([e for e in merged_labels["마일스톤"] if e in milestone_label])))
+
         def clean_to_pure_number(tokens_list: list) -> str:
             if not tokens_list or "없음" in tokens_list:
                 return "0"
@@ -159,6 +167,10 @@ async def ai_llm_run(input_data: str):
         p_emotion = ", ".join(clean_p_emotions) if clean_p_emotions else "지치다"
         b_emotion = ", ".join(clean_b_emotions) if clean_b_emotions else "짜증나다"
 
+        image_result = ", ".join(clean_image_labels) if clean_image_labels else ""
+        milestone_result = ", ".join(clean_milestone_labels) if clean_milestone_labels else ""
+
+
         labels = {
             "원본": input_data,
             "핵심어": ", ".join(clean_words) if clean_words else "없음",
@@ -170,8 +182,8 @@ async def ai_llm_run(input_data: str):
             "시간": ", ".join(dict.fromkeys(merged_labels["시간"])) if merged_labels["시간"] else "없음",
             "체온": clean_temp_format(merged_labels["체온"], input_data),
             "육아범주": ", ".join(dict.fromkeys(merged_labels["육아범주"])) if merged_labels["육아범주"] else "건강",
-            "주요라벨": ", ".join(dict.fromkeys(merged_labels["주요라벨"])) if merged_labels["주요라벨"] else "없음",
-            "마일스톤": ", ".join(dict.fromkeys(merged_labels["마일스톤"])) if merged_labels["마일스톤"] else "없음"
+            "사진라벨": image_result,
+            "마일스톤": milestone_result
         }
 
         llm_data_input = (
@@ -184,7 +196,7 @@ async def ai_llm_run(input_data: str):
             f"배변: {labels['배변']}\n"
             f"체온: {labels['체온']}\n"
             f"육아범주: {labels['육아범주']}\n"
-            f"주요라벨: {labels['주요라벨']}\n"
+            f"사진라벨: {labels['사진라벨']}\n"
             f"마일스톤: {labels['마일스톤']}"
         )
 
@@ -206,7 +218,7 @@ async def ai_llm_run(input_data: str):
             "d_sleep": labels["수면"],
             "d_toilet": labels["배변"],
             "d_temp": labels["체온"],
-            "d_i_label": labels["주요라벨"],
+            "d_i_label": labels["사진라벨"],
             "d_mile": labels["마일스톤"],
             "d_content": final_diary.strip()
         }
@@ -240,9 +252,9 @@ async def loop_test():
         print("수면:", ai['d_sleep'])
         print("배변:", ai['d_toilet'])
         print("체온:", ai['d_temp'])
-        print("마일스톤:", ai['d_mile'])
-        print("일기:\n", ai['d_content'])
-        print("주요라벨", ai["d_i_label"])
+        print("마일스톤:", ai['d_mile'])    
+        print("사진라벨:", ai["d_i_label"])
+        print("\n일기:\n", ai['d_content'])
         
         print("\n" + "="*40 + "\n")
 

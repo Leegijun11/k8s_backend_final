@@ -37,8 +37,6 @@ class Diary_Service:
                     if label == d_i_label:
                         d_image = image.i_image
                         break
-                    else:
-                        d_image = images[0].i_image
 
 
                 # ★ [변경 포인트] images/ -> uploads/ 기준으로 경로 자르기 (AI 생성)
