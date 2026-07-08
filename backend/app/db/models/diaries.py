@@ -27,4 +27,9 @@ class Diary(Base):
     b_id: Mapped[int] = mapped_column(ForeignKey('babies.b_id', ondelete="CASCADE"), nullable=False)
     
     baby: Mapped["Baby"] = relationship("Baby", back_populates="diaries")
-    milestone: Mapped["BabyMilestone"] = relationship("BabyMilestone", back_populates="diary")
+    milestone: Mapped["BabyMilestone"] = relationship(
+        "BabyMilestone", 
+        back_populates="diary", 
+        cascade="all, delete-orphan",
+        passive_deletes=True
+)

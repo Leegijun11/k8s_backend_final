@@ -103,7 +103,7 @@ async def generate_daily_diaries():
 
 
 def start_scheduler():
-    scheduler.add_job(generate_daily_diaries, "cron", hour=16, minute=20)
+    scheduler.add_job(generate_daily_diaries, "cron", hour=19, minute=10)
     scheduler.add_job(generate_first_birthday_books, "cron", hour=16, minute=47)
     scheduler.start()
     print("[scheduler] 일기 자동 생성 + 첫 생일 디지털북 스케줄러가 시작되었습니다.")
