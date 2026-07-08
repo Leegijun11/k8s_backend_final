@@ -12,7 +12,7 @@ class Care_Group(Base):
     __tablename__ = 'care_groups'
 
     g_id: Mapped[int] = mapped_column(primary_key=True)
-    creator_id: Mapped[int] = mapped_column(ForeignKey('users.u_id'), nullable=False)
+    creator_id: Mapped[int] = mapped_column(ForeignKey('users.u_id', ondelete="CASCADE"), nullable=False)
     
     members: Mapped[List["Parent"]] = relationship("Parent", back_populates="care_group", cascade="all, delete-orphan")
     babies: Mapped[List["Baby"]] = relationship("Baby", back_populates="care_group", cascade="all, delete-orphan")

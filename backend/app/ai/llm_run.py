@@ -4,18 +4,28 @@ import re
 from fastapi import HTTPException
 from app.ai.llm_config import get_watsonx
 from app.ai.llm_main import LLMDiary
+from app.db.crud.babies import Baby_Crud
 import time
+from datetime import date, datetime
 
 
 
-
-async def ai_llm_run(input_data: str):
+async def ai_llm_run(input_data: str, b_date: date):
     try:
         start_time = time.time()
         config = get_watsonx()
         pipeline = LLMDiary()
 
-        raw_labels_json = await pipeline.ai_llm_label_model_run(input_data, config)
+        if isinstance(b_date, datetime):
+            b_date = b_date.date()
+        elif isinstance(b_date, str):
+            b_date = datetime.strptime(b_date, "%Y-%m-%d %H:%M:%S").date()
+
+        days=(date.today()-b_date).days
+        age=int(days/30.43)
+        age=max(0,age)
+
+        raw_labels_json = await pipeline.ai_llm_label_model_run(input_data, age, config)
 
         cleaned_res = re.sub(r"```[a-zA-Z]*", "", raw_labels_json).strip()
         
@@ -127,20 +137,20 @@ async def ai_llm_run(input_data: str):
 
 
         image_label = ["눕기", "터미타임", "뒤집기", "앉기", "기기", "서기", "걷기", "기어오르기", "손동작", "놀이", "독서", "상호작용", "식사", "위생", "수면"]
-        milestone_label = ["모로 반사", "주먹 쥐기", "수유 빨기 반사", "달래기", "사회적 미소", "눈맞춤", "옹알이", "손가락 폄", "터미타임", "물건 향해 손 뻗기", "소리 내어 웃기", "거울 반응", "뒤집기", "침 흘리기", "구강기 탐색", "기대어 앉기", "이앓이 통증", "배밀이", "혼자 앉기", "이름 반응", "낯가림", "음절 옹알이", "물건 두드리기", "잡고 일어서기", "네발 기기", "대상 영속성", "짝짜꿍 시작", "꽃게 걸음", "손가락 가리키기", "의미 있는 첫 단어", "간단한 지시 수행", "집게 손가락 집기", "혼자 서기", "타인과의 상호작용", "도리도리/고집 표현", "걸음마", "도구 사용", "신체 부위 가리키기", "개인기", "신발/양말 벗기", "계단 오르기", "곁에서 따로 놀기", "문장 표현 및 언어 폭발", "요청한 물건 가져오기", "낙서하기", "혼자 배변", "세 단어 문장 구사", "역할극", "스스로 옷 입기", "10까지 세기", "세발자전거 페달 밟기", "한 발로 뛰기", "도형 그리기", "차례 지키기 및 공유", "성별 및 나이 인지"]
+        milestone_label = ["모로 반사", "주먹 쥐기", "수유 빨기 반사", "달래기", "사회적 미소", "눈맞춤", "옹알이", "손가락 폄", "터미타임", "물건 향해 손 뻗기", "소리 내어 웃기", "거울 반응", "뒤집기", "침 흘리기", "구강기 탐색", "기대어 앉기", "이앓이", "배밀이", "혼자 앉기", "이름 반응", "낯가림", "음절 옹알이", "물건 두드리기", "잡고 일어서기", "네발 기기", "대상 영속성", "짝짜꿍", "꽃게 걸음", "손가락 가리키기", "의미 있는 첫 단어", "간단한 지시 수행", "집게 손가락 집기", "혼자 서기", "타인과의 상호작용", "거부 표현", "걸음마", "도구 사용", "신체 부위 가리키기", "개인기", "신발/양말 벗기", "계단 오르기", "따로 놀기", "문장 표현 및 언어 폭발", "요청한 물건 가져오기", "낙서하기", "혼자 배변", "두세 단어 구사", "역할극", "스스로 신발 벗기", "혼자 계단오르기", "스스로 옷 입기", "5까지 세기", "세발자전거 페달 밟기", "도형 그리기", "나이 및 이름 인지", "세 단어 문장 구사", "10까지 세기", "한 발로 뛰기", "구체적인 사람 그리기", "차례 지키기 및 공유", "성별 및 나이 인지"]
 
         clean_image_labels = sorted(list(set([e for e in merged_labels["사진라벨"] if e in image_label])))
         clean_milestone_labels = sorted(list(set([e for e in merged_labels["마일스톤"] if e in milestone_label])))
 
         def clean_to_pure_number(tokens_list: list) -> str:
             if not tokens_list or "없음" in tokens_list:
-                return "0"
+                return "0회"
             combined = "".join(tokens_list)
             numbers = [int(n) for n in re.findall(r'\d+', combined)]
             if numbers:
                 total_count = sum(numbers) if len(numbers) > 1 and "간식" in combined else max(numbers)
-                return str(total_count)
-            return "0"
+                return str(total_count)+"회"
+            return "0회"
 
         def clean_sleep_format(tokens_list: list, original_input: str) -> str:
             if not tokens_list or "없음" in tokens_list:
@@ -209,6 +219,7 @@ async def ai_llm_run(input_data: str):
         end_time = time.time()
         execution_time = end_time - start_time
         print(f"실행 시간: {execution_time:.5f} 초")
+        print(labels["사진라벨"])
         return {
             "d_main": labels["원본"],
             "d_word": labels["핵심어"],
@@ -232,13 +243,19 @@ async def ai_llm_run(input_data: str):
 
 
 async def loop_test():
-    label = [
-        "오후 낮잠을 30분 만에 칼같이 깨더니 그때부터 세상 서럽게 울고불고 난리. 안아줘도 싫다, 내려놔도 싫다 하루 종일 프로 징징이 모드 작동함. 눈가 가득 피곤함이 가득한데도 이 악물고 안 자려고 버팀. 다행히 저녁 이유식은 평소보다 훨씬 많은 150g 싹싹 긁어 먹음. 묵직한 소변 기저귀 확인하고 체온도 36.5도 정상 확인. 밤잠은 7시 반에 눕히자마자 레드썬! 내일은 부디 낮잠 연장 성공하자.",
-        "오전 낮잠을 겨우 15분 자고 깨더니 하루 종일 눈 밑이 힁뎅그렁하고 하품 연발. 입에 손을 자꾸 넣고 짜증을 내는 게 이앓이 시작인가 싶어 마음이 쓰임. 오후 내내 안겨만 있으려고 해서 팔이 떨어질 뻔함. 걱정했는데 다행히 막수 분유 220ml 남김없이 원샷함. 시원하게 감자(대변) 하나 생산하고 열은 36.8도 정상. 7시 15분에 기절하듯 조기 육퇴 성공. 내일은 컨디션 회복해서 푹 자자.",
-        "낮잠 자려고 눕히기만 하면 20분 만에 눈을 번쩍 뜸. 결국 오후 내내 눕히면 깨고 안으면 졸며 버티느라 모자람 가득한 징징이 모드. 피곤해서 칭얼거리는 아기 달래느라 하얗게 불태움. 그래도 저녁 분유 200ml는 꿀떡꿀떡 다 비워줘서 고마움. 기저귀 갈아주며 보니 묵직하고 체온도 36.6도 안정적. 저녁 7시 정각에 육퇴 문 열어줌. 내일은 등 센서 끄고 바닥에서 꿀잠 자자.",
-        "낮잠을 20분 만에 깨고는 하루 종일 눈이 껌뻑껌뻑, 졸린 기색이 역력함. 성장기인지 오후 내내 유독 사소한 일에도 찡찡거리며 껌딱지처럼 달라붙음. 허리가 부서질 것 같았지만 저녁 막수 때 분유 210ml를 한 번도 안 쉬고 다 마심. 소변 양 넉넉하고 열 없는 것(36.7도) 확인 완료. 칭칭대던 게 무색하게 6시 50분에 바로 골아떨어짐. 내일은 깨지 말고 낮잠 푹 자길.",
-        "잠깐 외출했다가 낮잠 타이밍을 놓쳐서 20분밖에 못 잠. 차에서 깨더니만 눈 밑이 쾡해진 채로 오후 내내 짜증 지수 폭발. 졸리면 자면 되는데 왜 버티는지 의문. 영혼 탈탈 털렸으나 저녁 분유 200ml는 대견하게 완분함. 쉬 기저귀 빵빵하고 체온은 36.5도로 지극히 정상. 피곤했는지 7시도 안 되어서 딥슬립 들어가심. 조기 육퇴 감사하며, 내일은 집에서 푹 자자.",
-    ]
+ 
+    label =[
+    "세 단어 연속 대화가 통함 주어 목적어 서술어 조리있게 말함 세 단어 문장 구사 완벽함. 10까지 셈 완료 열까지 세기 숫자 나열 개수 다 셈 10까지 세기 성공함. 한발로 껑충 외발 뛰기 한발 버티기 성공함. 식사 3회, 배변 없음, 체온 36.7도 정상.",
+    "사람 구체적으로 졸라맨 그림 그림 그리기 얼굴 팔다리 그림 구체적인 사람 그리기 완성함. 양보하기 친구랑 나눠먹음 차례차례 미끄럼틀 줄섬 차례 지키기 및 공유 성공함. 나는 남자야 라고 나는 여자야 라고 성별 및 나이 인지 대답 완벽함. 식사 3회, 대변 하나 생산, 체온 36.6도.",
+    "열까지 세기 숫자 인지 숫자 나열 수 개념 인지 수 세기 성공함. 세 단어 연속 어른처럼 말함 조리있게 말함 대화가 통함 문장 구사함. 한발로 껑충 한발 깡총 제자리 한발 홉핑 한 발로 뛰기 성공함. 낮잠 없음, 식사 3회, 배변 1회 가림, 체온 36.5도.",
+    "졸라맨 그림 그림 그럴듯함 구체적인 사람 그리기 한바탕 완성함. 내 차례 기다림 장난감 같이씀 차례 지킴 친구 안 때림 양보 성공 공유 행동함. 이름 성별 말함 네살이라고 함 다섯살이라고 함 성별 대답 완벽함. 식사 3회, 소변 양 넉넉하고 체온 36.6도.",
+    "한발 버티기 다리 들고 버팀 깽깽이 발 외발 뛰기 한 발로 뛰기 대단함. 친구랑 나눠먹음 미끄럼틀 줄섬 차례 지킴 양보 성공 공유하기 행동함. 10까지 셈 완료 열까지 세기 개수 다 셈 완료함. 식사 3회 완밥, 대변 없음, 낮잠 없음, 체온 36.7도 정상."
+]
+
+
+
+
+
 
     for idx, text in enumerate(label):
         ai = await ai_llm_run(text)

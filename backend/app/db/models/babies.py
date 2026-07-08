@@ -30,7 +30,7 @@ class Baby(Base):
     b_image: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     b_created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
     
-    g_id: Mapped[int] = mapped_column(ForeignKey('care_groups.g_id'), nullable=False)
+    g_id: Mapped[int] = mapped_column(ForeignKey('care_groups.g_id', ondelete="CASCADE"), nullable=False)
     
     care_group: Mapped["Care_Group"] = relationship("Care_Group", back_populates="babies")
     character: Mapped[Optional["BabyCharacter"]] = relationship("BabyCharacter", back_populates="baby", cascade="all, delete-orphan")
