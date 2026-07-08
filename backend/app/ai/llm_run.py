@@ -10,20 +10,11 @@ from datetime import date, datetime
 
 
 
-async def ai_llm_run(input_data: str, b_date: date):
+async def ai_llm_run(input_data: str, age: int):
     try:
         start_time = time.time()
         config = get_watsonx()
         pipeline = LLMDiary()
-
-        if isinstance(b_date, datetime):
-            b_date = b_date.date()
-        elif isinstance(b_date, str):
-            b_date = datetime.strptime(b_date, "%Y-%m-%d %H:%M:%S").date()
-
-        days=(date.today()-b_date).days
-        age=int(days/30.43)
-        age=max(0,age)
 
         raw_labels_json = await pipeline.ai_llm_label_model_run(input_data, age, config)
 
@@ -219,7 +210,6 @@ async def ai_llm_run(input_data: str, b_date: date):
         end_time = time.time()
         execution_time = end_time - start_time
         print(f"실행 시간: {execution_time:.5f} 초")
-        print(labels["사진라벨"])
         return {
             "d_main": labels["원본"],
             "d_word": labels["핵심어"],

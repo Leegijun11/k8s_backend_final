@@ -1,10 +1,12 @@
 from fastapi import status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.scheme.diaries import Diary_Create, Diary_Update
+from app.db.scheme.babymilestones import BabyMilestone_Create
 from app.db.crud.diaries import Diary_Crud
 from app.db.crud.babies import Baby_Crud
+from app.db.crud.milestones import Milestone_Crud
 from app.ai.llm_run import ai_llm_run
-from datetime import date
+from datetime import date, datetime
 
 class Diary_Service:
 
@@ -29,21 +31,30 @@ class Diary_Service:
                         detail="해당 날짜의 이미지 정보가 없습니다"
                     )
                 
-                b_date = await Baby_Crud.crud_babies_detail(db, diary.b_id)
+
+                baby_date = await Baby_Crud.crud_babies_detail(db, diary.b_id)
+                b_date = baby_date.b_birth
+
+                if isinstance(b_date, datetime):
+                    b_date = b_date.date()
+                elif isinstance(b_date, str):
+                    b_date = datetime.strptime(b_date, "%Y-%m-%d %H:%M:%S").date()
+
+                days=(date.today()-b_date).days
+                age=int(days/30.43)
+                age=max(0,age)
                 
-                
-                llm_result = await ai_llm_run(log.l_content, b_date.b_birth)
+                llm_result = await ai_llm_run(log.l_content, age)
                 d_i_label = llm_result.get("d_i_label", "")
 
-                print(d_i_label)
                 clean_labels = [lbl.strip() for lbl in d_i_label.split(",")]
 
+                d_image= None
                 for image in images:
                     label = (image.i_label or "").strip()
                    
                     if label in clean_labels:
                         d_image = image.i_image
-                        print(d_image)
                         break
 
 
@@ -67,6 +78,25 @@ class Diary_Service:
                 }
 
                 new_diary = await Diary_Crud.crud_diaries_create(db, diary_data)
+
+
+                m_content = llm_result.get("d_mile")
+                if m_content and m_content.strip():
+                    m_names = [m.strip() for m in m_content.split(",") if m.strip()]
+                    
+                    for m_name in m_names:
+                        m_find = await Milestone_Crud.crud_milestones_find(db, m_name, age+2)
+                        
+                        if m_find is not None:
+                            bm_find = await Milestone_Crud.crud_milestones_babymilestone_find(db, m_find, diary.b_id)
+                            
+                            if not bm_find:
+                                bm_data = {"b_id": diary.b_id,
+                                           "d_id": new_diary.d_id,
+                                           "m_id": m_find}
+                                
+                                await Milestone_Crud.crud_milestones_babymilestone_create(db, BabyMilestone_Create(**bm_data))
+
             
             else:
                 # 사용자가 직접 작성하는 경우 (ai_create=False)
