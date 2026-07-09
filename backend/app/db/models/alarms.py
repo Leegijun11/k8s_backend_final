@@ -1,5 +1,4 @@
 from app.db.database import Base
-
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, TIMESTAMP, func, ForeignKey
 from datetime import datetime
@@ -15,10 +14,12 @@ class Alarm(Base):
     a_id: Mapped[int] = mapped_column(primary_key=True)
     a_created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
 
-    send_id: Mapped[int] = mapped_column(ForeignKey("users.u_id", ondelete="CASCADE"), nullable=False)
+    send_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.u_id", ondelete="CASCADE"), nullable=True)
     receive_id: Mapped[int] = mapped_column(ForeignKey("users.u_id", ondelete="CASCADE"), nullable=False)
-    g_id: Mapped[int] = mapped_column(ForeignKey('care_groups.g_id', ondelete="CASCADE"), nullable=False)
-    
-    sender: Mapped["User"] = relationship("User", foreign_keys=[send_id], back_populates="sent_alarms")
+    g_id: Mapped[Optional[int]] = mapped_column(ForeignKey('care_groups.g_id', ondelete="CASCADE"), nullable=True)
+
+    a_type: Mapped[str] = mapped_column(String(20), nullable=False, default="invite")
+
+    sender: Mapped[Optional["User"]] = relationship("User", foreign_keys=[send_id], back_populates="sent_alarms")
     receiver: Mapped["User"] = relationship("User", foreign_keys=[receive_id], back_populates="received_alarms")
-    care_group: Mapped["Care_Group"] = relationship("Care_Group", back_populates="alarms")
+    care_group: Mapped[Optional["Care_Group"]] = relationship("Care_Group", back_populates="alarms")
