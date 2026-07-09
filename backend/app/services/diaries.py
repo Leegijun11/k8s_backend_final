@@ -50,10 +50,6 @@ class Diary_Service:
                 clean_labels = [lbl.strip() for lbl in d_i_label.split(",")]
                 print(f"[clean_labels]: {clean_labels}")
 
-<<<<<<< HEAD
-=======
-
->>>>>>> kjfcvx12
                 d_image = None
                 for image in images:
                     label = (image.i_label or "").strip()
