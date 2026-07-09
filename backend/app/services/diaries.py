@@ -44,33 +44,20 @@ class Diary_Service:
                 age=int(days/30.43)
                 age=max(0,age)
                 
-<<<<<<< HEAD
                 llm_result = await ai_llm_run(log.l_content, age)
                 d_i_label = llm_result.get("d_i_label", "")
 
-=======
-                llm_result = await ai_llm_run(log.l_content, b_date.b_birth)
-                d_i_label = llm_result.get("d_i_label", "").strip()
-
-                print(f"[d_i_label]: '{d_i_label}'")
->>>>>>> leegijun11
                 clean_labels = [lbl.strip() for lbl in d_i_label.split(",")]
                 print(f"[clean_labels]: {clean_labels}")
 
-<<<<<<< HEAD
-                d_image= None
-=======
+
                 d_image = None
->>>>>>> leegijun11
                 for image in images:
                     label = (image.i_label or "").strip()
                     print(f"[image label]: '{label}' / in clean_labels: {label in clean_labels}")
                     if label in clean_labels:
                         d_image = image.i_image
-<<<<<<< HEAD
-=======
                         print(f"[매칭 성공]: {d_image}")
->>>>>>> leegijun11
                         break
 
                 # 매칭되는 이미지가 없으면 첫 번째 이미지를 기본값으로 사용
