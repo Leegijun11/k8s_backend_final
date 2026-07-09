@@ -63,7 +63,7 @@ class BabyService:
 
     # 2. 아이 목록 조회
     @staticmethod
-    async def service_babies_list(db: AsyncSession, u_id: int):
+    async def service_babies_list(db:AsyncSession, u_id:int):
         try:
             # Parent 정보 조회
             parent_data = await Parent_Crud.crud_parents_get_by_u_id(db, u_id)
@@ -88,7 +88,7 @@ class BabyService:
 
     # 3. 아이 세부 정보
     @staticmethod
-    async def service_babies_read(db: AsyncSession, b_id: int):
+    async def service_babies_read(db: AsyncSession, b_id:int):
         try:
             db_data = await Baby_Crud.crud_babies_detail(db, b_id)
         except Exception as e:
@@ -159,7 +159,7 @@ class BabyService:
 
     # 5. 아이 정보 삭제
     @staticmethod
-    async def service_babies_delete(db: AsyncSession, b_id: int):
+    async def service_babies_delete(db: AsyncSession, b_id:int):
         try:
             exist_baby = await Baby_Crud.crud_babies_detail(db, b_id)
         except Exception:
