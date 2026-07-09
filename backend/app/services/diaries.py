@@ -24,14 +24,7 @@ class Diary_Service:
                     )
                 
                 images = await Diary_Crud.crud_diaries_get_images(db, diary.b_id, diary.d_date)
-
-                if not images:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail="해당 날짜의 이미지 정보가 없습니다"
-                    )
-                
-
+                             
                 baby_date = await Baby_Crud.crud_babies_detail(db, diary.b_id)
                 b_date = baby_date.b_birth
 
@@ -51,24 +44,25 @@ class Diary_Service:
                 print(f"[clean_labels]: {clean_labels}")
 
                 d_image = None
-                for image in images:
-                    label = (image.i_label or "").strip()
-                    print(f"[image label]: '{label}' / in clean_labels: {label in clean_labels}")
-                    if label in clean_labels:
-                        d_image = image.i_image
-                        print(f"[매칭 성공]: {d_image}")
-                        break
+                if images:
+                    for image in images:
+                        label = (image.i_label or "").strip()
+                        print(f"[image label]: '{label}' / in clean_labels: {label in clean_labels}")
+                        if label in clean_labels:
+                            d_image = image.i_image
+                            print(f"[매칭 성공]: {d_image}")
+                            break
 
-                # 매칭되는 이미지가 없으면 첫 번째 이미지를 기본값으로 사용
-                if not d_image and images:
-                    d_image = images[0].i_image
-                    print(f"[fallback] 첫번째 이미지 사용: {d_image}")
+                    # 매칭되는 이미지가 없으면 첫 번째 이미지를 기본값으로 사용
+                    if not d_image and images:
+                        d_image = images[0].i_image
+                        print(f"[fallback] 첫번째 이미지 사용: {d_image}")
 
-                # images/ -> uploads/ 기준으로 경로 자르기
-                if d_image:
-                    d_image = d_image.replace("\\", "/")
-                    if "uploads/" in d_image:
-                        d_image = "uploads/" + d_image.split("uploads/", 1)[1]
+                    # images/ -> uploads/ 기준으로 경로 자르기
+                    if d_image:
+                        d_image = d_image.replace("\\", "/")
+                        if "uploads/" in d_image:
+                            d_image = "uploads/" + d_image.split("uploads/", 1)[1]
 
                 diary_data = {
                     "d_title": f"{diary.d_date} ai 일기",
