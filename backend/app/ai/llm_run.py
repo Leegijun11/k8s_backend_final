@@ -209,7 +209,7 @@ async def ai_llm_run(input_data: str, age: int=38):
             backup_match = re.search(r'(\d+\.\d+)', original_input)
             if backup_match:
                 return f"{backup_match.group(1)}도"
-            return "없음"
+            return ""
 
 
         valid_p_emotions = ["뿌듯하다", "지치다", "답답하다", "미안하다", "행복하다", "걱정되다"]
