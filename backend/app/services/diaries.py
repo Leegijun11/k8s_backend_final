@@ -31,23 +31,28 @@ class Diary_Service:
                 
                 b_date = await Baby_Crud.crud_babies_detail(db, diary.b_id)
                 
-                
                 llm_result = await ai_llm_run(log.l_content, b_date.b_birth)
-                d_i_label = llm_result.get("d_i_label", "")
+                d_i_label = llm_result.get("d_i_label", "").strip()
 
-                print(d_i_label)
+                print(f"[d_i_label]: '{d_i_label}'")
                 clean_labels = [lbl.strip() for lbl in d_i_label.split(",")]
+                print(f"[clean_labels]: {clean_labels}")
 
+                d_image = None
                 for image in images:
                     label = (image.i_label or "").strip()
-                   
+                    print(f"[image label]: '{label}' / in clean_labels: {label in clean_labels}")
                     if label in clean_labels:
                         d_image = image.i_image
-                        print(d_image)
+                        print(f"[매칭 성공]: {d_image}")
                         break
 
+                # 매칭되는 이미지가 없으면 첫 번째 이미지를 기본값으로 사용
+                if not d_image and images:
+                    d_image = images[0].i_image
+                    print(f"[fallback] 첫번째 이미지 사용: {d_image}")
 
-                # ★ [변경 포인트] images/ -> uploads/ 기준으로 경로 자르기 (AI 생성)
+                # images/ -> uploads/ 기준으로 경로 자르기
                 if d_image:
                     d_image = d_image.replace("\\", "/")
                     if "uploads/" in d_image:
@@ -58,7 +63,7 @@ class Diary_Service:
                     "d_content": llm_result.get("d_content"),
                     "d_label": llm_result.get("d_label"),
                     "d_date": diary.d_date,
-                    "d_image": d_image,  # 가공된 깨끗한 상대 경로(uploads/...)가 들어감
+                    "d_image": d_image,
                     "d_eat": llm_result.get("d_eat"),
                     "d_sleep": llm_result.get("d_sleep"),
                     "d_toilet": llm_result.get("d_toilet"),
@@ -72,7 +77,6 @@ class Diary_Service:
                 # 사용자가 직접 작성하는 경우 (ai_create=False)
                 user_diary_data = diary.model_dump()
                 
-                # ★ [변경 포인트] images/ -> uploads/ 기준으로 경로 자르기 (수동 생성)
                 if user_diary_data.get("d_image"):
                     img_path = user_diary_data["d_image"].replace("\\", "/")
                     if "uploads/" in img_path:
