@@ -8,11 +8,10 @@ from app.db.scheme.babymilestones import BabyMilestone_Read, BabyMilestone_Creat
 router = APIRouter(prefix="/milestones", tags=["Milestone"])
 
 @router.get("/list", response_model=list[MilestoneStatus_Read])
-async def routers_milestones_list(months: int,
-                                  b_id: int,
+async def routers_milestones_list(b_id: int,
                                   category: str = "",
                                   db: AsyncSession = Depends(get_db)):
-        return await MilestoneService.services_milestones_list(db, b_id, months, category)
+        return await MilestoneService.services_milestones_list(db, b_id, category)
 
 
 @router.post("/bm/create", response_model=BabyMilestone_Read)

@@ -1,12 +1,12 @@
 from fastapi import status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.scheme.diaries import Diary_Create, Diary_Update
-from app.db.scheme.babymilestones import BabyMilestone_Create
+from app.db.scheme.babymilestones import BabyMilestone_Create, BabyMilestone_Update
 from app.db.crud.diaries import Diary_Crud
 from app.db.crud.babies import Baby_Crud
 from app.db.crud.milestones import Milestone_Crud
 from app.ai.llm_run import ai_llm_run
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 class Diary_Service:
 
@@ -81,23 +81,41 @@ class Diary_Service:
 
 
                 m_content = llm_result.get("d_mile")
-                if m_content and m_content.strip():
-                    m_names = [m.strip() for m in m_content.split(",") if m.strip()]
+                print(m_content)
+                m_names = [m["item"].strip() for m in m_content if isinstance(m, dict) and m.get("item")] if isinstance(m_content, list) else []
                     
-                    for m_name in m_names:
-                        m_find = await Milestone_Crud.crud_milestones_find(db, m_name, age+2)
-                        
-                        if m_find is not None:
-                            bm_find = await Milestone_Crud.crud_milestones_babymilestone_find(db, m_find, diary.b_id)
-                            
-                            if not bm_find:
-                                bm_data = {"b_id": diary.b_id,
-                                           "d_id": new_diary.d_id,
-                                           "m_id": m_find}
-                                
-                                await Milestone_Crud.crud_milestones_babymilestone_create(db, BabyMilestone_Create(**bm_data))
+                for m_name in m_names:
+                    current_status = False
 
-            
+                    if isinstance(m_content, list):
+                        for ms_obj in m_content:
+                            if isinstance(ms_obj, dict) and ms_obj.get("item", "").strip() == m_name:
+                                current_status = bool(ms_obj.get("status", False))
+                                break
+                            
+                    m_find = await Milestone_Crud.crud_milestones_find(db, m_name, age+2)
+                    
+                    if m_find is not None:
+                        print(m_find)
+                        bm_find = await Milestone_Crud.crud_milestones_babymilestone_find(db, m_find, diary.b_id)
+                        
+                        bm_data = {
+                                    "b_id": diary.b_id,
+                                    "d_id": new_diary.d_id,
+                                    "m_id": m_find,
+                                    "m_achieved": current_status,
+                                    "m_achieved_date": new_diary.d_date
+                                }
+
+                        if bm_find is None:
+                            await Milestone_Crud.crud_milestones_babymilestone_create(db, BabyMilestone_Create(**bm_data))
+                        
+                        else:
+                            if bm_find.m_achieved is False:
+                                await Milestone_Crud.crud_milestones_babymilestone_create(db, BabyMilestone_Create(**bm_data))
+                            
+                            elif bm_find.m_achieved is True:
+                                pass
             else:
                 # 사용자가 직접 작성하는 경우 (ai_create=False)
                 user_diary_data = diary.model_dump()

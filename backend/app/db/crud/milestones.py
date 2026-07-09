@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from sqlalchemy import select, func
 from app.db.models.milestones import Milestone
 from app.db.models.babymilestones import BabyMilestone
 
@@ -13,10 +13,34 @@ class Milestone_Crud:
                                    b_id : int, 
                                    months : int, 
                                    category : str) -> list[MilestoneStatus_Read] | None:
-        query = (select(Milestone, BabyMilestone)
-                .outerjoin(BabyMilestone, (Milestone.m_id == BabyMilestone.m_id) & (BabyMilestone.b_id == b_id))
-                .where(Milestone.m_months == months)
-                .where(Milestone.m_category == category))
+        margin = 2 if months < 24 else 1
+        min_months = max(0, months - margin)
+        max_months = months + margin
+
+        sub_query = (
+            select(
+                BabyMilestone.bm_id,
+                BabyMilestone.m_id,
+                BabyMilestone.m_achieved,
+                BabyMilestone.m_achieved_date,
+                BabyMilestone.d_id,
+                func.row_number().over(
+                    partition_by=BabyMilestone.m_id,
+                    order_by=[BabyMilestone.m_achieved.desc(), BabyMilestone.bm_id.desc()]
+                ).label("row_num")
+            )
+            .where(BabyMilestone.b_id == b_id)
+            .subquery()
+        )
+
+        query = (
+            select(Milestone, sub_query)
+            .outerjoin(sub_query, (Milestone.m_id == sub_query.c.m_id) & (sub_query.c.row_num == 1))
+            .where(Milestone.m_months.between(min_months, max_months))
+        )
+
+        if category and category.strip():
+            query = query.where(Milestone.m_category == category)
             
         results = await db.execute(query)
         db_rows = results.all()
@@ -26,11 +50,11 @@ class Milestone_Crud:
                                      m_category=m.m_category,
                                      app_milestone=m.app_milestone,
                                      
-                                     bm_id=bm.bm_id if bm else None,
-                                     is_achieved=True if bm else False,
-                                     m_achieved_date=bm.m_achieved_date if bm else None,
-                                     d_id=bm.d_id if bm else None)
-                                     for m, bm in db_rows]
+                                     bm_id=row[0] if row[0] else None,
+                                     is_achieved=bool(row[2]) if row[0] else False,
+                                     m_achieved_date=row[3] if row[0] else None,
+                                     d_id=row[4] if row[0] else None)
+                                     for m, *row in db_rows]
 
 
     # 마일스톤 조회
@@ -68,8 +92,8 @@ class Milestone_Crud:
     # 베이비 마일스톤 수정
     @staticmethod
     async def crud_milestones_babymilestone_update(db : AsyncSession,
-                                                   data : BabyMilestone_Update,
-                                                   bm_id : int):
+                                                   bm_id : int,
+                                                   data : BabyMilestone_Update):
         db_data=await db.get(BabyMilestone, bm_id)
         
         if db_data:           

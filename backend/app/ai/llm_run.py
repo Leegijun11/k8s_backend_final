@@ -10,30 +10,38 @@ from datetime import date, datetime
 
 
 
-async def ai_llm_run(input_data: str, age: int):
+async def ai_llm_run(input_data: str, age: int=38):
     try:
         start_time = time.time()
+        # 왓슨 연결
         config = get_watsonx()
+        # llm 연결
         pipeline = LLMDiary()
-
+        # 라벨 모델 실행
         raw_labels_json = await pipeline.ai_llm_label_model_run(input_data, age, config)
-
-        cleaned_res = re.sub(r"```[a-zA-Z]*", "", raw_labels_json).strip()
+        # 코드 블록 시작 기호 제거
+        cleaned_res = re.sub(r"```[a-zA-Z]*\n?|```", "", raw_labels_json).strip()
         
         if "[" in cleaned_res and "]" in cleaned_res:
-            start_idx = cleaned_res.rindex("[")
+            start_idx = cleaned_res.index("[")
             end_idx = cleaned_res.rindex("]") + 1
             if start_idx < end_idx:
                 cleaned_res = cleaned_res[start_idx:end_idx]
 
         label_list = []
         try:
+            # json 로드
             label_list = json.loads(cleaned_res)
+
+            if isinstance(label_list, dict):
+                label_list = [label_list]
         except json.JSONDecodeError:
             try:
-                dict_blocks = re.findall(r"\{[^{}]*\}", cleaned_res)
+                dict_blocks = re.findall(r"\{.*?\}", cleaned_res, re.DOTALL)
+
                 for block in dict_blocks:
                     extracted = {}
+
                     patterns = {
                         "핵심어": r'"핵심어"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
                         "부모감정": r'"부모감정"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
@@ -44,19 +52,32 @@ async def ai_llm_run(input_data: str, age: int):
                         "시간": r'"시간"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
                         "체온": r'"체온"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
                         "육아범주": r'"육아범주"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
-                        "사진라벨": r'"사진라벨"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
-                        "마일스톤": r'"마일스톤"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?'
+                        "사진라벨": r'"사진라벨"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?'
                     }
 
                     for key, pattern in patterns.items():
                         match = re.search(pattern, block)
                         if match:
-                            val = match.group(1).strip().strip('"').strip("'").strip('}')
-                            extracted[key] = val
-                    if extracted:
+                            extracted[key] = match.group(1).strip()
+                        else:
+                            extracted[key] = ""
+
+                    ms_match = re.search(r'"마일스톤"\s*:\s*(\[[^\]]*\])', block, re.DOTALL)
+                    if ms_match:
+                        try:
+                            extracted["마일스톤"] = json.loads(ms_match.group(1).strip())
+                        except Exception:
+                            items = re.findall(r'"([^"]*)"', ms_match.group(1))
+                            extracted["마일스톤"] = [{"item": i.strip(), "status": True} for i in items if i.strip() and ":" not in i]
+
+                    else:
+                        extracted["마일스톤"] = []
+
+                    if any(extracted.values()):
                         label_list.append(extracted)
             except Exception:
                 label_list = []
+
 
         merged_labels = {
             "핵심어": [], "부모감정": [], "아이감정": [], 
@@ -64,15 +85,40 @@ async def ai_llm_run(input_data: str, age: int):
             "육아범주": [], "사진라벨":[], "마일스톤":[]
         }
 
+        INVALID_VALUES = {"없음", "정보없음", "null", "na", "n/a", "-", ""}
+
         for idx, label_dict in enumerate(label_list):
             if not isinstance(label_dict, dict):
                 continue
 
             for key in merged_labels.keys():
-                val = label_dict.get(key, "").strip()
-                if val and val != "없음":
-                    tokens = [t.strip() for t in val.split(",") if t.strip()]
-                    merged_labels[key].extend(tokens)
+                val = label_dict.get(key, "")
+                
+                if key == "마일스톤":
+                    if isinstance(val, list):
+                        merged_labels[key].extend([v for v in val if isinstance(v, dict) and v.get("item")])
+                    elif isinstance(val, str) and val.strip() and val.strip() not in INVALID_VALUES:
+                        tokens = [t.strip() for t in val.split(",") if t.strip()]
+                        merged_labels[key].extend([{"item": t, "status": True} for t in tokens])
+                    continue
+                
+                if isinstance(val, str):
+                    val = val.strip()
+                    if val and val.lower() not in INVALID_VALUES:
+                        tokens = [t.strip() for t in val.split(",") if t.strip()]
+                        merged_labels[key].extend(tokens)
+
+        for key in merged_labels.keys():
+            if key == "마일스톤":
+                unique_miles = {}
+                for ms_obj in merged_labels[key]:
+                    item_name = ms_obj["item"].strip()
+                    unique_miles[item_name] = ms_obj
+                merged_labels[key] = sorted(list(unique_miles.values()), key=lambda x: x["item"])
+            else:
+                merged_labels[key] = list(dict.fromkeys(merged_labels[key]))
+
+
 
         clean_words = []
         for w in dict.fromkeys(merged_labels["핵심어"]):
@@ -97,41 +143,39 @@ async def ai_llm_run(input_data: str, age: int):
 
 
         clean_miles = []
-        for w in dict.fromkeys(merged_labels["마일스톤"]):
-            if re.match(r'^[가-힣0-9\s]+$', w):
+        seen_items = set()
+        
+        for ms_obj in merged_labels["마일스톤"]:
+            if not isinstance(ms_obj, dict) or "item" not in ms_obj:
+                continue
+                
+            w = ms_obj["item"].strip()
+            
+            if w in seen_items:
+                continue
+            seen_items.add(w)
+            
+            if re.match(r'^[가-힣0-9\s/]+$', w):
                 clean_m = w.strip()
                 
                 if any(c.isdigit() for c in clean_m):
-                    clean_miles.append(w)
+                    clean_miles.append(ms_obj)
                     continue
                 
                 is_valid = False
                 if len(clean_m) >= 2:
                     for i in range(len(clean_m) - 1):
-                        if clean_m[i:i+2] in input_data.replace(" ", ""):
+                        target_m = clean_m[i:i+2].replace("/", "")
+                        if target_m in input_data.replace(" ", ""):
                             is_valid = True
                             break
                 else:
                     if clean_m in input_data:
                         is_valid = True
+                        
                 if is_valid:
-                    clean_miles.append(w)
+                    clean_miles.append(ms_obj)
 
-
-
-        valid_p_emotions = ["뿌듯하다", "지치다", "답답하다", "미안하다", "행복하다", "걱정되다"]
-        valid_b_emotions = ["기쁘다", "화나다", "슬프다", "무섭다", "심심하다", "짜증나다"]
-        
-        clean_p_emotions = sorted(list(set([e for e in merged_labels["부모감정"] if e in valid_p_emotions])))
-        clean_b_emotions = sorted(list(set([e for e in merged_labels["아이감정"] if e in valid_b_emotions])))
-
-
-
-        image_label = ["눕기", "터미타임", "뒤집기", "앉기", "기기", "서기", "걷기", "기어오르기", "손동작", "놀이", "독서", "상호작용", "식사", "위생", "수면"]
-        milestone_label = ["모로 반사", "주먹 쥐기", "수유 빨기 반사", "달래기", "사회적 미소", "눈맞춤", "옹알이", "손가락 폄", "터미타임", "물건 향해 손 뻗기", "소리 내어 웃기", "거울 반응", "뒤집기", "침 흘리기", "구강기 탐색", "기대어 앉기", "이앓이", "배밀이", "혼자 앉기", "이름 반응", "낯가림", "음절 옹알이", "물건 두드리기", "잡고 일어서기", "네발 기기", "대상 영속성", "짝짜꿍", "꽃게 걸음", "손가락 가리키기", "의미 있는 첫 단어", "간단한 지시 수행", "집게 손가락 집기", "혼자 서기", "타인과의 상호작용", "거부 표현", "걸음마", "도구 사용", "신체 부위 가리키기", "개인기", "신발/양말 벗기", "계단 오르기", "따로 놀기", "문장 표현 및 언어 폭발", "요청한 물건 가져오기", "낙서하기", "혼자 배변", "두세 단어 구사", "역할극", "스스로 신발 벗기", "혼자 계단오르기", "스스로 옷 입기", "5까지 세기", "세발자전거 페달 밟기", "도형 그리기", "나이 및 이름 인지", "세 단어 문장 구사", "10까지 세기", "한 발로 뛰기", "구체적인 사람 그리기", "차례 지키기 및 공유", "성별 및 나이 인지"]
-
-        clean_image_labels = sorted(list(set([e for e in merged_labels["사진라벨"] if e in image_label])))
-        clean_milestone_labels = sorted(list(set([e for e in merged_labels["마일스톤"] if e in milestone_label])))
 
         def clean_to_pure_number(tokens_list: list) -> str:
             if not tokens_list or "없음" in tokens_list:
@@ -142,6 +186,7 @@ async def ai_llm_run(input_data: str, age: int):
                 total_count = sum(numbers) if len(numbers) > 1 and "간식" in combined else max(numbers)
                 return str(total_count)+"회"
             return "0회"
+
 
         def clean_sleep_format(tokens_list: list, original_input: str) -> str:
             if not tokens_list or "없음" in tokens_list:
@@ -155,6 +200,7 @@ async def ai_llm_run(input_data: str, age: int):
                 return backup_match.group(1).strip()
             return "없음"
 
+
         def clean_temp_format(tokens_list: list, original_input: str) -> str:
             combined = "".join(tokens_list) if tokens_list else ""
             match = re.search(r'(\d+\.\d+)', combined)
@@ -165,12 +211,30 @@ async def ai_llm_run(input_data: str, age: int):
                 return f"{backup_match.group(1)}도"
             return "없음"
 
+
+        valid_p_emotions = ["뿌듯하다", "지치다", "답답하다", "미안하다", "행복하다", "걱정되다"]
+        valid_b_emotions = ["기쁘다", "화나다", "슬프다", "무섭다", "심심하다", "짜증나다"]
+        
+        clean_p_emotions = sorted(list(set([e for e in merged_labels["부모감정"] if e in valid_p_emotions])))
+        clean_b_emotions = sorted(list(set([e for e in merged_labels["아이감정"] if e in valid_b_emotions])))
+
         p_emotion = ", ".join(clean_p_emotions) if clean_p_emotions else "지치다"
         b_emotion = ", ".join(clean_b_emotions) if clean_b_emotions else "짜증나다"
 
-        image_result = ", ".join(clean_image_labels) if clean_image_labels else ""
-        milestone_result = ", ".join(clean_milestone_labels) if clean_milestone_labels else ""
 
+        image_label = ["눕기", "터미타임", "뒤집기", "앉기", "기기", "서기", "걷기", "기어오르기", "손동작", "놀이", "독서", "상호작용", "식사", "위생", "수면"]
+        clean_image_labels = sorted(list(set([e for e in merged_labels["사진라벨"] if e in image_label])))
+        image_result = ", ".join(clean_image_labels) if clean_image_labels else ""
+        
+        
+        milestone_label = ["모로 반사", "주먹 쥐기", "수유 빨기 반사", "달래기", "사회적 미소", "눈맞춤", "옹알이", "손가락 폄", "터미타임", "물건 향해 손 뻗기", "소리 내어 웃기", "거울 반응", "뒤집기", "침 흘리기", "구강기 탐색", "기대어 앉기", "이앓이", "배밀이", "혼자 앉기", "이름 반응", "낯가림", "음절 옹알이", "물건 두드리기", "잡고 일어서기", "네발 기기", "대상 영속성", "짝짜꿍", "꽃게 걸음", "손가락 가리키기", "의미 있는 첫 단어", "간단한 지시 수행", "집게 손가락 집기", "혼자 서기", "타인과의 상호작용", "거부 표현", "걸음마", "도구 사용", "신체 부위 가리키기", "개인기", "신발/양말 벗기", "계단 오르기", "따로 놀기", "문장 표현 및 언어 폭발", "요청한 물건 가져오기", "낙서하기", "혼자 배변", "두세 단어 구사", "역할극", "스스로 신발 벗기", "혼자 계단오르기", "스스로 옷 입기", "5까지 세기", "세발자전거 페달 밟기", "도형 그리기", "나이 및 이름 인지", "세 단어 문장 구사", "10까지 세기", "한 발로 뛰기", "구체적인 사람 그리기", "차례 지키기 및 공유", "성별 및 나이 인지"]
+
+        clean_milestone_labels = sorted(
+            list({e["item"].strip(): e for e in merged_labels["마일스톤"] if isinstance(e, dict) and "item" in e and e["item"].strip() in milestone_label}.values()),
+            key=lambda x: x["item"]
+        )
+
+        milestone_result = clean_milestone_labels if clean_milestone_labels else []
 
         labels = {
             "원본": input_data,
@@ -198,14 +262,17 @@ async def ai_llm_run(input_data: str, age: int):
             f"체온: {labels['체온']}\n"
             f"육아범주: {labels['육아범주']}\n"
             f"사진라벨: {labels['사진라벨']}\n"
-            f"마일스톤: {labels['마일스톤']}"
         )
 
         final_diary = await pipeline.ai_llm_diary_model_run(llm_data_input, config)
+        final_diary = str(final_diary or "").strip()
 
         raw_units_matches = re.findall(r'(\d+)\s*(ml|g|kg|cc|cm|도|회|체온)', input_data.lower())
+        
         for num, unit in raw_units_matches:
-            final_diary = re.sub(rf'\b{num}(?=[가-힣])', f'{num}{unit}', final_diary)
+            if num in final_diary and f"{num}{unit}" not in final_diary:
+                final_diary = final_diary.replace(num, f"{num}{unit}")
+
 
         end_time = time.time()
         execution_time = end_time - start_time
@@ -220,13 +287,10 @@ async def ai_llm_run(input_data: str, age: int):
             "d_toilet": labels["배변"],
             "d_temp": labels["체온"],
             "d_i_label": labels["사진라벨"],
-            "d_mile": labels["마일스톤"],
+            "d_mile": milestone_result,
             "d_content": final_diary.strip()
         }
 
-
-
-        
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"자동 일기 파이프라인 가동 실패 원인: {str(e)}")
 
