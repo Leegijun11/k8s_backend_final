@@ -116,6 +116,10 @@ async def router_babyimages_create(background_tasks: BackgroundTasks,
 
     return image_data
 
+#갤러리용 전체 사진 목록
+@router.get('/monthly', response_model=list[BabyImage_Read])
+async def router_babyimages_list_all(b_id: int, year: int, month: int, db: AsyncSession = Depends(get_db)):
+    return await BabyImage_Service.services_babyimages_list_all(db, b_id, year, month)
 
 # GET 이미지 목록
 @router.get('/list', response_model=list[BabyImage_Read])
@@ -146,8 +150,3 @@ async def router_babyimages_multi_del(request: BabyImage_Multi_del,
                                       db: AsyncSession = Depends(get_db)):
     return await BabyImage_Service.services_babyimages_multi_del(db, request.i_ids)
 
-
-#갤러리용 전체 사진 목록
-@router.get('/list_all', response_model=list[BabyImage_Read])
-async def router_babyimages_list_all(b_id:int, db:AsyncSession=Depends(get_db)):
-    return await BabyImage_Service.services_babyimages_list_all(db, b_id)

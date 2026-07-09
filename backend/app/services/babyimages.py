@@ -139,6 +139,14 @@ class BabyImage_Service:
     
     #갤러리용(전체 사진 목록)
     @staticmethod
-    async def services_babyimages_list_all(db: AsyncSession, b_id: int) -> list[BabyImage_Read]:
-        data = await BabyImage_Crud.crud_babyimages_list_all(db, b_id)
-        return [BabyImage_Read.model_validate(item) for item in data]
+    async def services_babyimages_list_all(db: AsyncSession, b_id: int, year: int, month: int) -> list[BabyImage_Read]:
+        try:
+            data = await BabyImage_Crud.crud_babyimages_list_all(db, b_id, year, month)
+            return [BabyImage_Read.model_validate(item) for item in data]
+        
+        except HTTPException:
+            await db.rollback()
+            raise
+
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"월별 사진 목록 조회 실패: {e}")
