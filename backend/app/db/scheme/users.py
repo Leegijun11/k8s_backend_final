@@ -70,6 +70,17 @@ class User_Update(BaseModel):
     u_address: Annotated[str | None, Field(min_length=1, max_length=255)] = None
     u_image: str | None = None
 
+    @field_validator('u_pw')
+    @classmethod
+    def validate_pw(cls, v):
+        if v is None:
+            return v
+        if len(v) < 8:
+            raise ValueError('비밀번호는 8자 이상이어야 합니다.')
+        if not re.search(r'\d', v) or not re.search(r'[@$!%*#?&]', v):
+            raise ValueError('비밀번호는 숫자와 특수문자를 포함해야 합니다.')
+        return v
+
     @field_validator('u_phone')
     @classmethod
     def validate_phone(cls, v):
@@ -82,7 +93,7 @@ class User_Update(BaseModel):
     def not_blank(cls, v):
         if v is not None and not v.strip():
             raise ValueError('공백만 입력할 수 없습니다.')
-        return v.strip() if v is not None else v 
+        return v.strip() if v is not None else v
     
 class User_Read(User_Base):
     u_id: int
