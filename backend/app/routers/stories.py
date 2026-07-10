@@ -3,13 +3,14 @@
 #router_stories_detail : 디지털북 상세
 #router_stories_delete : 디지털북 삭제
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.scheme.stories import Story_Create, Story_Read
 from app.services.stories import Story_Service
 
 from app.db.scheme.story_pages import Story_Page_Create, Story_Page_Read
+from app.db.scheme.diaries import Diary_Read
 
 from app.db.database import get_db
 
@@ -19,8 +20,8 @@ router = APIRouter(prefix="/stories", tags=["Stories"])
 
 # 디지털북 생성
 @router.post('/create', response_model=Story_Read)
-async def router_stories_create(story: Story_Create, db: AsyncSession = Depends(get_db)):
-    return await Story_Service.service_stories_create(db, story)
+async def router_stories_create(story: Story_Create, d_ids:list[int] = Query(..., description="실패 일기 ID 리스트"), db: AsyncSession = Depends(get_db)):
+    return await Story_Service.service_stories_create(db, story, d_ids)
 
 
 # b_id별 디지털북 목록
@@ -56,3 +57,8 @@ async def router_stories_pages_detail(sp_id : int, db: AsyncSession = Depends(ge
 async def router_stories_pages_del(sp_id : int, db: AsyncSession = Depends(get_db)):
     return await Story_Service.service_stories_pages_del(db, sp_id)
 
+
+# 디지털북 일기 선택 목록
+@router.get('/select_diaries', response_model=list[Diary_Read])
+async def router_stories_select_diaries(b_id : int, m_id : int, db: AsyncSession = Depends(get_db)):
+    return await Story_Service.service_stories_diaries_select(db, b_id, m_id)

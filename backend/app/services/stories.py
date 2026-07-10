@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.scheme.stories import Story_Create, Story_Update
 from app.db.crud.stories import Story_Crud
-
 from app.db.crud.story_pages import Story_Page_Crud
+from app.db.crud.milestones import Milestone_Crud
 
 from app.ai.llm_story import ai_llm_story_run
 
@@ -18,7 +18,7 @@ class Story_Service:
 
     # 디지털북 생성
     @staticmethod
-    async def service_stories_create(db: AsyncSession, story: Story_Create):
+    async def service_stories_create(db: AsyncSession, story: Story_Create, d_ids:list):
         try:
             diaries = await Story_Crud.crud_stories_get_diaries(db, story.b_id, story.start_date, story.end_date)
 
@@ -28,27 +28,68 @@ class Story_Service:
                     detail="해당 기간의 일기 정보가 없습니다"
                 )
             
-            if not story.s_name:
-                title=f'{story.start_date}~{story.end_date} 제작 동화책'
-            else:
-                title=story.s_name
+            milestones = await Milestone_Crud.crud_milestones_bm_date_list(db, story.b_id, story.start_date, story.end_date)
 
-            story_data = {
-                "s_name": title,
-                "b_id": story.b_id,
-            }
+            if not milestones:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="해당 기간의 마일스톤 정보가 없습니다"
+                )
 
-            new_story = await Story_Crud.crud_stories_create(db, story_data)
+            selected_milestones = []
+            for m in milestones:
+                if m.m_achieved is True:
+                    selected_milestones.append(m)
+                elif m.m_achieved is False and m.d_id in d_ids:
+                    selected_milestones.append(m)
+
+            selected_milestones = sorted(selected_milestones, key=lambda m: m.m_achieved_date)
+
+            total_count = len(selected_milestones)
+            if total_count < 8 or total_count > 16:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                    detail=f"동화책을 만들기 위한 일기 개수가 맞지 않습니다. (현재: {total_count}개)")
+
+            selected_diaries = []
+            for milestone in selected_milestones:
+                matched_diary = next((d for d in diaries if d.d_id == milestone.d_id), None)
+                if matched_diary:
+                    import copy
+                    cloned_diary = copy.copy(matched_diary)
+                    cloned_diary.status = "True" if milestone.m_achieved else "False"
+                    cloned_diary.app_milestone = milestone.milestone.app_milestone if milestone.milestone else "성장 행동"
+                    selected_diaries.append(cloned_diary)
+
+            title = story.s_name if story.s_name else f'{story.start_date}~{story.end_date} 제작 동화책'
+            story_db_data = story.model_dump(exclude={"start_date", "end_date"}) | {"s_name": title}
+
+            new_story = await Story_Crud.crud_stories_create(db, story_db_data)
+
+            input_list = []
+            for index, diary in enumerate(selected_diaries, start=1):
+                input_list.append({
+                    "page_num": index,
+                    "status": diary.status,
+                    "milestone_name": diary.app_milestone,
+                    "diary": diary.d_content
+                })
+
+            llm = await ai_llm_story_run(input_list)
+
+            if len(selected_diaries) != len(llm):
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"AI가 생성한 스토리 개수({len(llm)}개)와 선택한 일기 개수({len(selected_diaries)}개)가 일치하지 않습니다. 다시 시도해 주세요."
+                )
 
             pages_data = []
-
-            for i, diary in enumerate(diaries):
-                llm = await ai_llm_story_run(diary.d_content)
-                
-                pages_data.append({"s_id": new_story.s_id,
-                                   "sp_num": i+1,
-                                   "sp_image": diary.d_image,
-                                   "sp_content": llm["sp_content"]})
+            for i, diary in enumerate(selected_diaries):
+                pages_data.append({
+                    "s_id": new_story.s_id,
+                    "sp_num": i+1,
+                    "sp_image": diary.d_image,
+                    "sp_content": llm[i]
+                })
                     
             await Story_Page_Crud.crud_story_pages_multi_create(db, pages_data)
 
@@ -62,10 +103,9 @@ class Story_Service:
 
         except Exception as e:
             await db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"디지털북 생성 실패: {e}"
-            )
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f"디지털북 생성 실패: {e}")
+
 
     # b_id별 디지털북 목록
     @staticmethod
@@ -232,3 +272,23 @@ class Story_Service:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"책 삭제에 실패했습니다: {e}"
             )
+
+
+    # 디지털북 사용 일기 선택 목록
+    @staticmethod
+    async def service_stories_diaries_select(db : AsyncSession, b_id : int, m_id : int):
+        try:
+            data=Milestone_Crud.crud_milestones_bm_false_list(db, b_id, m_id)
+
+            if not data:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                        detail="해당 일기들을 찾을 수 없습니다")
+            
+            return data
+
+        except HTTPException:
+            raise
+
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                detail=f"일기들을 불러오는데 실패했습니다: {e}")

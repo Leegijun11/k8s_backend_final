@@ -1,10 +1,13 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
+from sqlalchemy.orm import joinedload
 from app.db.models.milestones import Milestone
 from app.db.models.babymilestones import BabyMilestone
 
 from app.db.scheme.milestones import Milestone_Read, MilestoneStatus_Read
 from app.db.scheme.babymilestones import BabyMilestone_Create, BabyMilestone_Update
+
+from datetime import date
 
 class Milestone_Crud:
     # 마일스톤 리스트
@@ -78,6 +81,30 @@ class Milestone_Crud:
                                   .where(BabyMilestone.b_id==b_id))
         return result.scalars().one_or_none()
 
+    
+    # 베이비 마일스톤 기간내 목록
+    @staticmethod
+    async def crud_milestones_bm_date_list(db : AsyncSession,
+                                         b_id : int,
+                                         start_date : date,
+                                         end_date : date):
+        result = await db.execute(select(BabyMilestone)
+                                  .where(BabyMilestone.b_id==b_id)
+                                  .where(BabyMilestone.m_achieved_date.between(start_date, end_date))
+                                  .options(joinedload(BabyMilestone.milestone)) )
+        return result.scalars().all()
+
+
+    # 베이비 마일스톤 m_id가 동일한 실패 목록
+    @staticmethod
+    async def crud_milestones_bm_false_list(db : AsyncSession,
+                                         b_id : int,
+                                         m_id : int):
+        result = await db.execute(select(BabyMilestone)
+                                  .where(BabyMilestone.b_id==b_id)
+                                  .where(BabyMilestone.m_id==m_id)
+                                  .where(BabyMilestone.m_achieved==False))
+        return result.scalars().all()
 
     # 베이비 마일스톤 생성
     @staticmethod

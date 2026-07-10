@@ -2,19 +2,26 @@ from pydantic import BaseModel, ConfigDict
 from datetime import date
 from typing import Optional
 
+class Story_Base(BaseModel):
+    s_fcover : str
+    s_bcover : str
+    s_creator : str
+    s_comment : str
 
-class Story_Create(BaseModel):
+
+class Story_Create(Story_Base):
     b_id: int
     s_name: str | None=None
     start_date: date
     end_date: date
 
 
-class Story_Update(BaseModel):
+
+class Story_Update(Story_Base):
     s_name: str
 
 
-class Story_Read(BaseModel):
+class Story_Read(Story_Base):
     model_config = ConfigDict(from_attributes=True)
 
     s_id: int
