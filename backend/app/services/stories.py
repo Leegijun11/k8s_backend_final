@@ -198,7 +198,7 @@ class Story_Service:
 
             if not data:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                                    detail="헤당 상세페이지를 찾을 수 없습니다")
+                                    detail="해당 상세페이지를 찾을 수 없습니다")
 
             return data
 
@@ -207,7 +207,7 @@ class Story_Service:
 
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                detail=f"헤당 상세페이지를 불러오는데 실패했습니다: {e}")
+                                detail=f"해당 상세페이지를 불러오는데 실패했습니다: {e}")
         
 
     # 디지털북 페이지 삭제

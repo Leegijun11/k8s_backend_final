@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.scheme.diaries import Diary_Create, Diary_Read, Diary_List_Item, Diary_Detail, Diary_Update
 from app.services.diaries import Diary_Service
+from app.services.direct_diaries import Direct_Diaries_Service
 from app.db.database import get_db
 from app.core.auth import auth_get_u_id
 from datetime import date
@@ -19,7 +20,10 @@ router = APIRouter(prefix="/diaries", tags=["Diaries"])
 # 일기 생성
 @router.post('/create', response_model=Diary_Read)
 async def router_diaries_create(diary: Diary_Create, ai_create:bool=True, db: AsyncSession = Depends(get_db)):
-    return await Diary_Service.service_diaries_create(db, diary, ai_create)
+    if ai_create:
+        return await Diary_Service.service_diaries_create(db, diary, ai_create)
+    else:
+        return await Direct_Diaries_Service.service_direct_diaries_create(db, diary_create=diary)
 
 
 # 날짜별 일기 목록

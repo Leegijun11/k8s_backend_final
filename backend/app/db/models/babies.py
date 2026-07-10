@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from app.db.models.logs import Log
     from app.db.models.stories import Story
     from app.db.models.babymilestones import BabyMilestone
+    from app.db.models.forums import Forums
 
 class Baby(Base):
     __tablename__ = 'babies'
@@ -29,7 +30,7 @@ class Baby(Base):
     b_image: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     b_created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
     
-    g_id: Mapped[int] = mapped_column(ForeignKey('care_groups.g_id'), nullable=False)
+    g_id: Mapped[int] = mapped_column(ForeignKey('care_groups.g_id', ondelete="CASCADE"), nullable=False)
     
     care_group: Mapped["Care_Group"] = relationship("Care_Group", back_populates="babies")
     character: Mapped[Optional["BabyCharacter"]] = relationship("BabyCharacter", back_populates="baby", cascade="all, delete-orphan")
@@ -39,3 +40,4 @@ class Baby(Base):
     logs : Mapped[List["Log"]] = relationship("Log", back_populates="baby", cascade="all, delete-orphan")
     stories: Mapped[list["Story"]] = relationship("Story", back_populates="baby")
     baby_milestones: Mapped[List["BabyMilestone"]] = relationship("BabyMilestone", back_populates="baby", cascade="all, delete-orphan")
+    forums: Mapped[List["Forums"]]=relationship("Forums", back_populates="baby")

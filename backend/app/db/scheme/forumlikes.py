@@ -5,7 +5,6 @@ class ForumLike_Read(BaseModel):
     f_l_id: int
     f_id: int
     u_id: int
-    f_l_created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 

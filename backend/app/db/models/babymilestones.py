@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app.db.models.babies import Baby
     from app.db.models.milestones import Milestone
+    from app.db.models.diaries import Diary
 
 class BabyMilestone(Base):
     __tablename__ = 'baby_milestones'
@@ -17,6 +18,7 @@ class BabyMilestone(Base):
     b_id: Mapped[int] = mapped_column(ForeignKey('babies.b_id', ondelete="CASCADE"), nullable=False)
     # 마일스톤 테이블 참조
     m_id: Mapped[int] = mapped_column(ForeignKey('milestones.m_id', ondelete="CASCADE"), nullable=False)
+    d_id: Mapped[int] = mapped_column(ForeignKey('diaries.d_id', ondelete="CASCADE"), nullable=False)
     
     m_achieved: Mapped[bool] = mapped_column(Boolean, default=False)
     m_achieved_date: Mapped[datetime] = mapped_column(TIMESTAMP, nullable=True)
@@ -24,3 +26,4 @@ class BabyMilestone(Base):
     # 관계 설정
     baby: Mapped["Baby"] = relationship("Baby", back_populates="baby_milestones")
     milestone: Mapped["Milestone"] = relationship("Milestone", back_populates="baby_milestones")
+    diary : Mapped["Diary"] = relationship("Diary", back_populates="milestone")

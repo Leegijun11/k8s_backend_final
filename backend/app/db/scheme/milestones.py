@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from typing import Optional
 
@@ -7,12 +7,12 @@ class Milestone_Read(BaseModel):
     m_months: int
     m_category: str
     app_milestone: str
-    is_achieved: bool = False  # 조인 시 결합될 필드
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
-class BabyMilestone_Update(BaseModel):
-    b_id: int
-    milestone_id: int
-    is_achieved: bool
+
+class MilestoneStatus_Read(Milestone_Read):
+    bm_id: Optional[int] = None
+    is_achieved: bool = False
+    m_achieved_date: Optional[datetime] = None
+    d_id: Optional[int] = None

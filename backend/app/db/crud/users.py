@@ -18,7 +18,7 @@ class User_Crud:
         await db.flush()
         return db_data
 
-    
+
     # 유저 정보
     @staticmethod
     async def crud_users_me(db:AsyncSession, u_id:int) -> User | None:
@@ -105,3 +105,14 @@ class User_Crud:
         result=await db.execute(select(User).filter(User.u_account==u_account))
         return result.scalars().first()
     
+    # 이메일 중복검사
+    @staticmethod
+    async def crud_users_get_by_email(db: AsyncSession, u_email: str) -> User | None:
+        result = await db.execute(select(User).filter(User.u_email == u_email))
+        return result.scalars().first()
+    
+    # 전화번호 중복검사
+    @staticmethod
+    async def crud_users_get_by_phone(db: AsyncSession, u_phone: str) -> User | None:
+        result = await db.execute(select(User).filter(User.u_phone == u_phone))
+        return result.scalars().first()

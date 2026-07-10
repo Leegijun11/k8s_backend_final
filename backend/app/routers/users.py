@@ -35,7 +35,7 @@ async def router_users_login(user:User_Login, response:Response, db:AsyncSession
     db_user, access_token, refresh_token=result
     set_auth_cookies(response, access_token, refresh_token)
     return db_user
-    
+
 
 #로그아웃
 @router.post('/logout')
@@ -45,6 +45,10 @@ async def router_users_logout(response:Response,u_id: int=Depends(auth_get_u_id)
     response.delete_cookie("refresh_token", path="/")
     return {"message": "로그아웃 성공"}
 
+#아이디 중복확인
+@router.get('/check_account')
+async def router_users_check_account(u_account: str, db: AsyncSession = Depends(get_db)):
+    return await User_Service.service_users_check_account(db, u_account)
 
 #현재 유저 정보
 @router.get('/me', response_model=User_Read)

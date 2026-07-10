@@ -17,6 +17,4 @@ class Story_Page_Create(Story_Page_Base):
 
 class Story_Page_Read(Story_Page_Base):
     sp_id: int
-    sp_content: str
-    sp_image: str
     s_id: int
