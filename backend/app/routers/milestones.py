@@ -2,24 +2,35 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.database import get_db
 from app.services.milestones import MilestoneService
-from app.db.scheme.milestones import Milestone_Read
+from app.db.scheme.milestones import Milestone_Read, MilestoneStatus_Read
+from app.db.scheme.babymilestones import BabyMilestone_Read, BabyMilestone_Create, BabyMilestone_Update
 
 router = APIRouter(prefix="/milestones", tags=["Milestone"])
 
-@router.get("/list", response_model=list[Milestone_Read])
-async def routers_milestone_list(
-    months: int,
-    category: str = "",
-    b_id: int = None, # 달성 여부 확인을 위해 추가 가능
-    db: AsyncSession = Depends(get_db)
-):
-    return await MilestoneService.service_milestones_list(db, months, category, b_id)
+@router.get("/list", response_model=list[MilestoneStatus_Read])
+async def routers_milestones_list(b_id: int,
+                                  category: str = "",
+                                  db: AsyncSession = Depends(get_db)):
+        return await MilestoneService.services_milestones_list(db, b_id, category)
 
-@router.post("/check")
-async def routers_milestone_check(
-    b_id: int,
-    milestone_id: int,
-    is_achieved: bool,
-    db: AsyncSession = Depends(get_db)
-):
-    return await MilestoneService.service_milestones_check(db, b_id, milestone_id, is_achieved)
+
+@router.post("/bm/create", response_model=BabyMilestone_Read)
+async def routers_bm_create(data : BabyMilestone_Create,
+                            db: AsyncSession = Depends(get_db)):
+        return await MilestoneService.services_milestones_babymilestone_create(db, data)
+
+
+@router.post("/bm/update", response_model=BabyMilestone_Read)
+async def routers_bm_update(bm_id : int,
+                            data : BabyMilestone_Update,
+                            db: AsyncSession = Depends(get_db)):
+        return await MilestoneService.services_milestones_babymilestone_update(db, data, bm_id)
+
+@router.delete("/bm/del")
+async def routers_bm_delete(bm_id : int,
+                            db: AsyncSession = Depends(get_db)):
+        return await MilestoneService.services_milestones_babymilestone_delete(db, bm_id)
+
+
+
+
