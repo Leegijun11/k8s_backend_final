@@ -7,27 +7,33 @@ from app.db.scheme.babymilestones import BabyMilestone_Create, BabyMilestone_Upd
 from app.db.crud.babies import Baby_Crud
 from fastapi import HTTPException, status
 from datetime import datetime, date
+from typing import Optional
 
 class MilestoneService:
     # 마일스톤&성공 여부 목록
     @staticmethod
     async def services_milestones_list(db : AsyncSession,
                                        b_id : int,
-                                       category : str):
+                                       category : str,
+                                       target_age : Optional[int] = None):
         try:
-            baby_date = await Baby_Crud.crud_babies_detail(db, b_id)
-            b_date = baby_date.b_birth
+            if target_age is None:
+                baby_date = await Baby_Crud.crud_babies_detail(db, b_id)
+                b_date = baby_date.b_birth
 
-            if isinstance(b_date, datetime):
-                b_date = b_date.date()
-            elif isinstance(b_date, str):
-                b_date = datetime.strptime(b_date, "%Y-%m-%d %H:%M:%S").date()
+                if isinstance(b_date, datetime):
+                    b_date = b_date.date()
+                elif isinstance(b_date, str):
+                    b_date = datetime.strptime(b_date, "%Y-%m-%d %H:%M:%S").date()
 
-            days=(date.today()-b_date).days
-            age=int(days/30.43)
-            age=max(0,age)
+                days = (date.today() - b_date).days
+                age = int(days / 30.43)
+                age = max(0, age)
+            else:
+                age = target_age
 
-            result=await Milestone_Crud.crud_milestones_list(db, b_id, age, category)
+            # CRUD는 건드리지 않았습니다. 기존 인터페이스 그대로 호출합니다.
+            result = await Milestone_Crud.crud_milestones_list(db, b_id, age, category)
 
             if not result:
                 return []
