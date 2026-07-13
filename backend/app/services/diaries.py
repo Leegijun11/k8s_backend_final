@@ -42,9 +42,10 @@ class Diary_Service:
 
                 clean_labels = [lbl.strip() for lbl in d_i_label.split(",")]
                 print(f"[clean_labels]: {clean_labels}")
+                d_image = diary.d_image 
 
-                d_image = None
-                if images:
+                # 프론트에서 첨부한 사진이 없을 경우에만 AI 라벨링으로 사진 검색 수행
+                if not d_image and images:
                     for image in images:
                         label = (image.i_label or "").strip()
                         print(f"[image label]: '{label}' / in clean_labels: {label in clean_labels}")
@@ -53,23 +54,18 @@ class Diary_Service:
                             print(f"[매칭 성공]: {d_image}")
                             break
 
-                    # # 매칭되는 이미지가 없으면 첫 번째 이미지를 기본값으로 사용
-                    # if not d_image and images:
-                    #     d_image = images[0].i_image
-                    #     print(f"[fallback] 첫번째 이미지 사용: {d_image}")
-
-                    # images/ -> uploads/ 기준으로 경로 자르기
-                    if d_image:
-                        d_image = d_image.replace("\\", "/")
-                        if "uploads/" in d_image:
-                            d_image = "uploads/" + d_image.split("uploads/", 1)[1]
+                # images/ -> uploads/ 기준으로 경로 자르기
+                if d_image:
+                    d_image = d_image.replace("\\", "/")
+                    if "uploads/" in d_image:
+                        d_image = "uploads/" + d_image.split("uploads/", 1)[1]
 
                 diary_data = {
                     "d_title": f"{diary.d_date} ai 일기",
                     "d_content": llm_result.get("d_content"),
                     "d_label": llm_result.get("d_label"),
                     "d_date": diary.d_date,
-                    "d_image": d_image,
+                    "d_image": d_image, # 유저가 직접 올린 사진 or AI가 매칭한 사진이 들어갑니다.
                     "d_eat": llm_result.get("d_eat"),
                     "d_sleep": llm_result.get("d_sleep"),
                     "d_toilet": llm_result.get("d_toilet"),
@@ -195,7 +191,6 @@ class Diary_Service:
         try:
             update_data = update_diary.model_dump(exclude_unset=True)
 
-            # ★ [변경 포인트] images/ -> uploads/ 기준으로 경로 자르기 (일기 수정)
             if update_data.get("d_image"):
                 img_path = update_data["d_image"].replace("\\", "/")
                 if "uploads/" in img_path:
