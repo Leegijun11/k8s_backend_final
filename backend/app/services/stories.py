@@ -82,6 +82,7 @@ class Story_Service:
                     detail=f"AI가 생성한 스토리 개수({len(llm)}개)와 선택한 일기 개수({len(selected_diaries)}개)가 일치하지 않습니다. 다시 시도해 주세요."
                 )
 
+
             pages_data = []
             for i, diary in enumerate(selected_diaries):
                 pages_data.append({
