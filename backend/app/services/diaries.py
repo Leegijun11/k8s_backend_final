@@ -53,10 +53,10 @@ class Diary_Service:
                             print(f"[매칭 성공]: {d_image}")
                             break
 
-                    # 매칭되는 이미지가 없으면 첫 번째 이미지를 기본값으로 사용
-                    if not d_image and images:
-                        d_image = images[0].i_image
-                        print(f"[fallback] 첫번째 이미지 사용: {d_image}")
+                    # # 매칭되는 이미지가 없으면 첫 번째 이미지를 기본값으로 사용
+                    # if not d_image and images:
+                    #     d_image = images[0].i_image
+                    #     print(f"[fallback] 첫번째 이미지 사용: {d_image}")
 
                     # images/ -> uploads/ 기준으로 경로 자르기
                     if d_image:
