@@ -101,6 +101,7 @@ class Parent_Service:
             return [
                 {
                     "p_id": member.p_id,
+                    "u_id": member.u_id,
                     "u_name": user_map.get(member.u_id, {}).get("u_name"),
                     "u_image": user_map.get(member.u_id, {}).get("u_image"),
                     "p_role": member.p_role,
@@ -215,3 +216,25 @@ class Parent_Service:
             raise
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"현재 아이 조회 실패: {e}")
+        
+
+    # 양육자 상태 변경 (거절됨 등)
+    @staticmethod
+    async def service_parents_update_state(db: AsyncSession, u_id: int, p_state: str):
+        try:
+            query = select(Parent).where(Parent.u_id == u_id)
+            result = await db.execute(query)
+            parent = result.scalars().first()
+
+            if not parent:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="양육자를 찾을 수 없습니다")
+
+            parent.p_state = p_state
+            await db.commit()
+            return {"msg": f"상태가 {p_state}으로 변경되었습니다"}
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            await db.rollback()
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"상태 변경 실패: {e}")
