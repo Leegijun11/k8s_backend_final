@@ -19,7 +19,6 @@ class BabyService:
             raise HTTPException(status_code=400, detail="키와 몸무게는 0보다 커야 합니다.")
 
         try:
-            # 기존 그룹 확인
             existing_parent = await Parent_Crud.crud_parents_get_by_u_id(db, u_id)
 
             if existing_parent and existing_parent.g_id is not None:
@@ -29,13 +28,11 @@ class BabyService:
                 care_group = await CareGroup_Crud.crud_caregroups_create(db, new_group)
                 g_id = care_group.g_id
 
-            # 아이 등록
             baby_dict = baby.model_dump()
             baby_dict["g_id"] = g_id
 
             db_baby = await Baby_Crud.crud_babies_create(db, baby_dict)
 
-            # Parent 처리
             if existing_parent:
                 existing_parent.current_b_id = db_baby.b_id
             else:
@@ -63,12 +60,10 @@ class BabyService:
 
     # 2. 아이 목록 조회
     @staticmethod
-    async def service_babies_list(db:AsyncSession, u_id:int):
+    async def service_babies_list(db: AsyncSession, u_id: int):
         try:
-            # Parent 정보 조회
             parent_data = await Parent_Crud.crud_parents_get_by_u_id(db, u_id)
 
-            # active 상태가 아니면 목록 숨김
             if (
                 parent_data is None
                 or parent_data.g_id is None
@@ -76,7 +71,6 @@ class BabyService:
             ):
                 return []
 
-            # 아이 목록 조회
             db_data = await Baby_Crud.crud_babies_list(db, u_id)
             return db_data
 
@@ -88,7 +82,7 @@ class BabyService:
 
     # 3. 아이 세부 정보
     @staticmethod
-    async def service_babies_read(db: AsyncSession, b_id:int):
+    async def service_babies_read(db: AsyncSession, b_id: int):
         try:
             db_data = await Baby_Crud.crud_babies_detail(db, b_id)
         except Exception as e:
@@ -131,14 +125,7 @@ class BabyService:
                     detail="아이의 정보를 수정하는데 실패했습니다."
                 )
 
-            past_record = Record_Create(
-                b_id=exist_baby.b_id,
-                r_height=exist_baby.b_height,
-                r_weight=exist_baby.b_weight
-            )
-
-            await Record_Crud.crud_records_create(db, past_record)
-
+            # 먼저 babies 업데이트
             db_data = await Baby_Crud.crud_babies_update(db, b_id, baby)
 
             if db_data is None:
@@ -147,6 +134,14 @@ class BabyService:
                     detail="아이의 정보를 수정하는데 실패했습니다."
                 )
 
+            # 수정 후 값으로 record 저장
+            new_record = Record_Create(
+                b_id=db_data.b_id,
+                r_height=db_data.b_height,
+                r_weight=db_data.b_weight
+            )
+            await Record_Crud.crud_records_create(db, new_record)
+
             await db.commit()
             await db.refresh(db_data)
 
@@ -154,12 +149,14 @@ class BabyService:
 
         except Exception:
             await db.rollback()
-            raise HTTPException(status_code=400, detail=f"아이의 정보를 수정하는데 실패했습니다.")
-
+            raise HTTPException(
+                status_code=400,
+                detail="아이의 정보를 수정하는데 실패했습니다."
+            )
 
     # 5. 아이 정보 삭제
     @staticmethod
-    async def service_babies_delete(db: AsyncSession, b_id:int):
+    async def service_babies_delete(db: AsyncSession, b_id: int):
         try:
             exist_baby = await Baby_Crud.crud_babies_detail(db, b_id)
         except Exception:
@@ -176,7 +173,6 @@ class BabyService:
 
         try:
             db_data = await Baby_Crud.crud_babies_del(db, b_id)
-
             await db.commit()
             return db_data
 
