@@ -276,19 +276,19 @@ class Story_Service:
 
     # 디지털북 사용 일기 선택 목록
     @staticmethod
-    async def service_stories_diaries_select(db : AsyncSession, b_id : int, m_id : int):
+    async def service_stories_diaries_select(db: AsyncSession, b_id: int):
         try:
-            data=Milestone_Crud.crud_milestones_bm_false_list(db, b_id, m_id)
-
+            data = await Milestone_Crud.crud_milestones_bm_false_list(db, b_id)
             if not data:
-                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                                        detail="해당 일기들을 찾을 수 없습니다")
-            
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="해당 일기들을 찾을 수 없습니다"
+                )
             return data
-
         except HTTPException:
             raise
-
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                detail=f"일기들을 불러오는데 실패했습니다: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"일기들을 불러오는데 실패했습니다: {e}"
+            )

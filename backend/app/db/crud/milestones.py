@@ -97,13 +97,26 @@ class Milestone_Crud:
 
     # 베이비 마일스톤 m_id가 동일한 실패 목록
     @staticmethod
-    async def crud_milestones_bm_false_list(db : AsyncSession,
-                                         b_id : int,
-                                         m_id : int):
-        result = await db.execute(select(BabyMilestone)
-                                  .where(BabyMilestone.b_id==b_id)
-                                  .where(BabyMilestone.m_id==m_id)
-                                  .where(BabyMilestone.m_achieved==False))
+    async def crud_milestones_bm_false_list(db: AsyncSession, b_id: int):
+        from app.db.models.diaries import Diary
+
+        # 달성된 마일스톤에 연결된 d_id 목록
+        achieved_result = await db.execute(
+            select(BabyMilestone.d_id)
+            .where(
+                BabyMilestone.b_id == b_id,
+                BabyMilestone.m_achieved == True,
+                BabyMilestone.d_id != None
+            )
+        )
+        achieved_d_ids = [row[0] for row in achieved_result.fetchall()]
+
+        # 달성된 일기 제외한 전체 일기
+        query = select(Diary).where(Diary.b_id == b_id)
+        if achieved_d_ids:
+            query = query.where(Diary.d_id.notin_(achieved_d_ids))
+
+        result = await db.execute(query.order_by(Diary.d_date.desc()))
         return result.scalars().all()
 
     # 베이비 마일스톤 생성

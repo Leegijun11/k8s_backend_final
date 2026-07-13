@@ -3,13 +3,13 @@ from datetime import date
 from typing import Optional
 
 class Story_Base(BaseModel):
-    s_fcover : str
-    s_bcover : str
-    s_creator : str
-    s_comment : str
+    s_fcover: str | None = None
+    s_bcover: str | None = None
+    s_creator: str | None = None
+    s_comment: str | None = None
 
 
-class Story_Create(Story_Base):
+class Story_Create(BaseModel):
     b_id: int
     s_name: str | None=None
     start_date: date
