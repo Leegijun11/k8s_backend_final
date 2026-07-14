@@ -15,12 +15,12 @@ class Diary_Service:
     async def service_diaries_create(db: AsyncSession, diary: Diary_Create, ai_create: bool):
         try:
             if ai_create:
-                log = await Diary_Crud.crud_diaries_get_log(db, diary.b_id, diary.d_date)
+                raw_text = diary.original_text
 
-                if not log:
+                if not raw_text:
                     raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail="해당 날짜의 로그 정보가 없습니다"
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="일기를 생성할 원문 텍스트가 없습니다."
                     )
                 
                 images = await Diary_Crud.crud_diaries_get_images(db, diary.b_id, diary.d_date)
@@ -37,7 +37,8 @@ class Diary_Service:
                 age=int(days/30.43)
                 age=max(0,age)
                 
-                llm_result = await ai_llm_run(log.l_content, age)
+                # log.l_content 대신 raw_text를 AI로 넘겨줍니다.
+                llm_result = await ai_llm_run(raw_text, age)
                 d_i_label = llm_result.get("d_i_label", "")
 
                 clean_labels = [lbl.strip() for lbl in d_i_label.split(",")]
@@ -114,6 +115,7 @@ class Diary_Service:
 
             else:
                 user_diary_data = diary.model_dump()
+                user_diary_data.pop("original_text", None) 
                 
                 if user_diary_data.get("d_image"):
                     img_path = user_diary_data["d_image"].replace("\\", "/")
