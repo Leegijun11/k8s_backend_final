@@ -8,7 +8,6 @@ async def ai_llm_story_run(input_date: list) -> list:
     try:
         config = get_watsonx()
         pipeline = LLMDiary()
-        print(input_date)
         raw_story_string = await pipeline.ai_llm_story_model_run(input_date, config)
 
         cleaned_string = raw_story_string.strip()

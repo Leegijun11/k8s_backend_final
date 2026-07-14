@@ -57,7 +57,7 @@ class Story_Service:
                     import copy
                     cloned_diary = copy.copy(matched_diary)
                     cloned_diary.status = "True" if milestone.m_achieved else "False"
-                    cloned_diary.app_milestone = milestone.milestone.app_milestone if milestone.milestone else "성장 행동"
+                    cloned_diary.app_milestone = milestone.milestone.app_milestone if milestone.milestone else ""
                     selected_diaries.append(cloned_diary)
 
             title = story.s_name if story.s_name else f'{story.start_date}~{story.end_date} 제작 동화책'
