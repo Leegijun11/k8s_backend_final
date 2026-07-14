@@ -20,7 +20,7 @@ router = APIRouter(prefix="/stories", tags=["Stories"])
 
 # 디지털북 생성
 @router.post('/create', response_model=Story_Read)
-async def router_stories_create(story: Story_Create, d_ids:list[int] = Query(..., description="실패 일기 ID 리스트"), db: AsyncSession = Depends(get_db)):
+async def router_stories_create(story: Story_Create, d_ids:list[int] = Query(..., description="선택 일기 ID 리스트"), db: AsyncSession = Depends(get_db)):
     return await Story_Service.service_stories_create(db, story, d_ids)
 
 
