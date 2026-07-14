@@ -26,3 +26,9 @@ async def router_logs_detail(l_id: int,
 async def router_logs_del(l_id:int,
                           db: AsyncSession = Depends(get_db)):
     return await Log_Service.services_logs_del(db, l_id)
+
+
+# 기록 목록
+@router.get('/list', response_model=list[Log_Read])
+async def router_logs_list(b_id: int, db: AsyncSession = Depends(get_db)):
+    return await Log_Service.services_logs_list(db, b_id)

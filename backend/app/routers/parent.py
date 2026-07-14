@@ -39,6 +39,14 @@ async def router_parents_find(u_id:int,
                               db:AsyncSession=Depends(get_db)):
     return await Parent_Service.services_parent_find(db, u_id, g_id)
 
+# 양육자 상태 변경
+@router.put('/state')
+async def router_parents_update_state(
+    p_state: str,
+    u_id: int = Depends(auth_get_u_id),
+    db: AsyncSession = Depends(get_db)
+):
+    return await Parent_Service.service_parents_update_state(db, u_id, p_state)
 
 # 양육자 수정
 @router.post('/{p_id}')

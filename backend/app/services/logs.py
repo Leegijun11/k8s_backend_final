@@ -12,17 +12,6 @@ class Log_Service:
     async def services_logs_create_update(db:AsyncSession,
                                           log:Log_Create) -> Log_Read:
         try:
-            existing_log = await Log_Crud.crud_logs_find_date_b_id(db, log.b_id)
-
-            if existing_log:
-                update_data = Log_Update(l_content=log.l_content)
-
-                update = await Log_Crud.crud_logs_update(db, existing_log.l_id, update_data)
-                
-                await db.commit()
-                await db.refresh(update)
-                return update
-
             data = await Log_Crud.crud_logs_create(db, log)
             await db.commit()
             await db.refresh(data)
@@ -43,7 +32,6 @@ class Log_Service:
     async def services_logs_detail(db: AsyncSession,
                                    l_id:int) -> Log_Read | None:
         return await Log_Crud.crud_logs_detail(db, l_id)
-       
 
     # 기록 삭제
     @staticmethod
@@ -67,4 +55,9 @@ class Log_Service:
             await db.rollback()
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
                                 detail=f"기록 삭제 실패 :{e}")
+        
+    # 기록 목록
+    @staticmethod
+    async def services_logs_list(db: AsyncSession, b_id: int):
+        return await Log_Crud.crud_logs_list(db, b_id)
     
