@@ -14,7 +14,7 @@ class Diary_Create(BaseModel):
     d_temp: Optional[str] = None
     d_date: date
     b_id: int
-
+    original_text: Optional[str] = None
 
 class Diary_Read(BaseModel):
     model_config = ConfigDict(from_attributes=True)
