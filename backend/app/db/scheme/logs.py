@@ -21,5 +21,3 @@ class Log_Update(BaseModel):
 class Log_Read(Log_Base):
     l_id: int
     l_date : datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-

@@ -67,5 +67,14 @@ class Log_Crud:
             await db.flush()
             return db_data
         return None
-  
+    
+    #기록 목록
+    @staticmethod
+    async def crud_logs_list(db: AsyncSession, b_id: int) -> list[Log]:
+        query = (select(Log)
+                 .where(Log.b_id == b_id)
+                 .order_by(Log.l_date.desc()))
+        
+        result = await db.execute(query)
+        return list(result.scalars().all())
 

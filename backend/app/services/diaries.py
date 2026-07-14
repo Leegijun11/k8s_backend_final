@@ -44,7 +44,6 @@ class Diary_Service:
                 print(f"[clean_labels]: {clean_labels}")
                 d_image = diary.d_image 
 
-                # 프론트에서 첨부한 사진이 없을 경우에만 AI 라벨링으로 사진 검색 수행
                 if not d_image and images:
                     for image in images:
                         label = (image.i_label or "").strip()
@@ -65,7 +64,7 @@ class Diary_Service:
                     "d_content": llm_result.get("d_content"),
                     "d_label": llm_result.get("d_label"),
                     "d_date": diary.d_date,
-                    "d_image": d_image, # 유저가 직접 올린 사진 or AI가 매칭한 사진이 들어갑니다.
+                    "d_image": d_image,
                     "d_eat": llm_result.get("d_eat"),
                     "d_sleep": llm_result.get("d_sleep"),
                     "d_toilet": llm_result.get("d_toilet"),
@@ -105,15 +104,15 @@ class Diary_Service:
 
                         if bm_find is None:
                             await Milestone_Crud.crud_milestones_babymilestone_create(db, BabyMilestone_Create(**bm_data))
-                        
+
                         else:
                             if bm_find.m_achieved is False:
                                 await Milestone_Crud.crud_milestones_babymilestone_create(db, BabyMilestone_Create(**bm_data))
                             
                             elif bm_find.m_achieved is True:
                                 pass
+
             else:
-                # 사용자가 직접 작성하는 경우 (ai_create=False)
                 user_diary_data = diary.model_dump()
                 
                 if user_diary_data.get("d_image"):

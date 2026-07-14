@@ -67,4 +67,9 @@ class Log_Service:
             await db.rollback()
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
                                 detail=f"기록 삭제 실패 :{e}")
+        
+    # 기록 목록
+    @staticmethod
+    async def services_logs_list(db: AsyncSession, b_id: int):
+        return await Log_Crud.crud_logs_list(db, b_id)
     
