@@ -43,12 +43,12 @@ class Story_Service:
                 elif m.m_achieved is False and m.d_id in d_ids:
                     selected_milestones.append(m)
 
-            selected_milestones = sorted(selected_milestones, key=lambda m: m.m_achieved_date)
-
             total_count = len(selected_milestones)
             if total_count < 8 or total_count > 16:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                     detail=f"동화책을 만들기 위한 일기 개수가 맞지 않습니다. (현재: {total_count}개)")
+
+            selected_milestones = sorted(selected_milestones, key=lambda m: m.m_achieved_date)
 
             selected_diaries = []
             for milestone in selected_milestones:
