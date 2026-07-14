@@ -21,8 +21,6 @@ async def ai_llm_story_run(input_date: list) -> list:
         else:
             raise ValueError("LLM 응답에서 유효한 리스트 형식([ ])을 찾을 수 없습니다.")
 
-        print(cleaned_string)
-
         parsed_story_list = re.findall(r'"([^"\\]*(?:\\.[^"\\]*)*)"', cleaned_string)
 
         if not parsed_story_list:
@@ -37,6 +35,8 @@ async def ai_llm_story_run(input_date: list) -> list:
             cleaned_story = cleaned_story.strip().strip('"').strip("'")
             final_list.append(cleaned_story)
 
+        for i in final_list:
+            print(f'{i}\n')
         return final_list
     
     except Exception as e:
