@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, desc
 from sqlalchemy.orm import joinedload
 from app.db.models.milestones import Milestone
 from app.db.models.babymilestones import BabyMilestone
@@ -78,8 +78,9 @@ class Milestone_Crud:
                                                  b_id : int):
         result = await db.execute(select(BabyMilestone)
                                   .where(BabyMilestone.m_id==m_id)
-                                  .where(BabyMilestone.b_id==b_id))
-        return result.scalars().one_or_none()
+                                  .where(BabyMilestone.b_id==b_id)
+                                  .order_by(desc(BabyMilestone.m_achieved_date)))
+        return result.scalars().first()
 
     
     # 베이비 마일스톤 기간내 목록

@@ -9,7 +9,7 @@ class Story_Base(BaseModel):
     s_comment: str | None = None
 
 
-class Story_Create(BaseModel):
+class Story_Create(Story_Base):
     b_id: int
     s_name: str | None=None
     start_date: date
