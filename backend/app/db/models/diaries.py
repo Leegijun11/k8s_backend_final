@@ -13,7 +13,7 @@ class Diary(Base):
 
     d_id: Mapped[int] = mapped_column(primary_key=True)
     d_title: Mapped[str] = mapped_column(String(100), nullable=False)
-    d_content: Mapped[str] = mapped_column(String(255), nullable=False)
+    d_content: Mapped[str] = mapped_column(Text, nullable=False)
     d_label: Mapped[str] = mapped_column(String(100),nullable=False)
     d_date: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
     d_image: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
