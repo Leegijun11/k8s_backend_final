@@ -14,7 +14,10 @@ async def routers_milestones_list(b_id: int,
                                   target_age: Optional[int] = None,
                                   db: AsyncSession = Depends(get_db)):
         return await MilestoneService.services_milestones_list(db, b_id, category, target_age)
-
+@router.get("/achieved/count")
+async def routers_achieved_count(b_id: int, db: AsyncSession = Depends(get_db)):
+    count = await MilestoneService.services_milestones_achieved_count(db, b_id)
+    return {"count": count}
 
 @router.post("/bm/create", response_model=BabyMilestone_Read)
 async def routers_bm_create(data : BabyMilestone_Create,
