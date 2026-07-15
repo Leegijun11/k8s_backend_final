@@ -87,7 +87,7 @@ class Story_Service:
                 pages_data.append({
                     "s_id": new_story.s_id,
                     "sp_num": i+1,
-                    "sp_image": diary.d_image,
+                    "sp_image": diary.d_image if diary.d_image else "",
                     "sp_content": llm[i]
                 })
                     
