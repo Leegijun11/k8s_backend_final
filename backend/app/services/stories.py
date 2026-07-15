@@ -42,23 +42,27 @@ class Story_Service:
                     selected_milestones.append(m)
                 elif m.m_achieved is False and m.d_id in d_ids:
                     selected_milestones.append(m)
-
+            
+            print(d_ids)
             total_count = len(selected_milestones)
             if total_count < 8 or total_count > 16:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                     detail=f"동화책을 만들기 위한 일기 개수가 맞지 않습니다. (현재: {total_count}개)")
-
+            
             selected_milestones = sorted(selected_milestones, key=lambda m: m.m_achieved_date)
 
             selected_diaries = []
             for milestone in selected_milestones:
                 matched_diary = next((d for d in diaries if d.d_id == milestone.d_id), None)
+                print(matched_diary.d_id)
                 if matched_diary:
                     import copy
                     cloned_diary = copy.copy(matched_diary)
                     cloned_diary.status = "True" if milestone.m_achieved else "False"
                     cloned_diary.app_milestone = milestone.milestone.app_milestone if milestone.milestone else ""
                     selected_diaries.append(cloned_diary)
+
+                
 
             title = story.s_name if story.s_name else f'{story.start_date}~{story.end_date} 제작 동화책'
             story_db_data = story.model_dump(exclude={"start_date", "end_date"}) | {"s_name": title}
@@ -75,7 +79,7 @@ class Story_Service:
                 })
 
             llm = await ai_llm_story_run(input_list)
-
+            print(f"AI가 생성한 스토리 개수({len(llm)}개)와 선택한 일기 개수({len(selected_diaries)}개)")
             if len(selected_diaries) != len(llm):
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

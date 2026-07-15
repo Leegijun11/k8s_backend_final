@@ -159,3 +159,15 @@ class Milestone_Crud:
             await db.flush()
             return db_data
         return None
+    
+
+    @staticmethod
+    async def crud_milestones_achieved_count(db: AsyncSession, b_id: int) -> int:
+        result = await db.execute(
+            select(func.count())
+            .where(
+                BabyMilestone.b_id == b_id,
+                BabyMilestone.m_achieved == True
+            )
+        )
+        return result.scalar() or 0

@@ -43,6 +43,13 @@ class MilestoneService:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
                                 detail=f"마일스톤 목록 조회 실패 : {e}")
 
+    @staticmethod
+    async def services_milestones_achieved_count(db: AsyncSession, b_id: int) -> int:
+        try:
+            return await Milestone_Crud.crud_milestones_achieved_count(db, b_id)
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                detail=f"달성 마일스톤 수 조회 실패: {e}")
 
     # 베이비 마일스톤 생성
     @staticmethod
