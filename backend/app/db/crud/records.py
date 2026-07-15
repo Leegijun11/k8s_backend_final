@@ -1,17 +1,24 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy import extract
 from datetime import datetime
 from app.db.models.records import Record 
 from app.db.scheme.records import Record_Create, Record_Update
 
 
 class Record_Crud:
-    # 아이 성장 누적기록 등록
+    # 아이 성장 누적기록 등록 (월 단위 upsert)
     @staticmethod
-    async def crud_records_create(db:AsyncSession,
-                                  record: Record_Create) -> Record:          
+    async def crud_records_create(db: AsyncSession,
+                                   record: Record_Create) -> Record:
         data = record.model_dump()
-        db_data=Record(**data)
+
+        target_date = data.get("r_date") or datetime.utcnow()
+        if isinstance(target_date, str):
+            target_date = datetime.fromisoformat(target_date)
+        data["r_date"] = target_date
+
+        db_data = Record(**data)
         db.add(db_data)
         await db.flush()
         return db_data
