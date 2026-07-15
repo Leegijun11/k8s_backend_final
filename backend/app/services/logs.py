@@ -7,10 +7,10 @@ from app.db.scheme.logs import Log_Create, Log_Update, Log_Read
 
 
 class Log_Service:
-    # 기록 작성 & 수정
+    # 기록 작성
     @staticmethod
-    async def services_logs_create_update(db:AsyncSession,
-                                          log:Log_Create) -> Log_Read:
+    async def services_logs_create(db:AsyncSession,
+                                   log:Log_Create) -> Log_Read:
         try:
             data = await Log_Crud.crud_logs_create(db, log)
             await db.commit()
@@ -32,6 +32,32 @@ class Log_Service:
     async def services_logs_detail(db: AsyncSession,
                                    l_id:int) -> Log_Read | None:
         return await Log_Crud.crud_logs_detail(db, l_id)
+    
+
+    # 기록 수정
+    @staticmethod
+    async def services_logs_update(db:AsyncSession, l_id:int, update:Log_Update):
+        try :
+            update_data=await Log_Crud.crud_logs_update(db, l_id, update)
+            
+            if not update_data:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                                    detail="수정할 기록이 없습니다")
+            
+            
+            await db.commit()
+            await db.refresh(update_data)
+
+            return update_data
+        
+        except HTTPException:
+            raise
+
+        except Exception as e:
+            await db.rollback()
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                                detail=f"기록 수정 실패 :{e}")
+
 
     # 기록 삭제
     @staticmethod
