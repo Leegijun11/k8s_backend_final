@@ -8,9 +8,7 @@ async def ai_llm_story_run(input_date: list) -> list:
     try:
         config = get_watsonx()
         pipeline = LLMDiary()
-
         raw_story_string = await pipeline.ai_llm_story_model_run(input_date, config)
-        print("\n[1. LLM 원본 아웃풋 수신]:\n", raw_story_string)
 
         cleaned_string = raw_story_string.strip()
         cleaned_string = re.sub(r"^```[a-zA-Z]*\s*", "", cleaned_string)
@@ -23,14 +21,10 @@ async def ai_llm_story_run(input_date: list) -> list:
         else:
             raise ValueError("LLM 응답에서 유효한 리스트 형식([ ])을 찾을 수 없습니다.")
 
-        print("\n[2. 대괄호 추출 완료 후 문자열]:\n", cleaned_string)
-
         parsed_story_list = re.findall(r'"([^"\\]*(?:\\.[^"\\]*)*)"', cleaned_string)
 
         if not parsed_story_list:
             parsed_story_list = re.findall(r"'([^'\\]*(?:\\.[^'\\]*)*)'", cleaned_string)
-
-        print("\n[3. 정규식 핀셋 문장 추출 성공 리스트]:\n", parsed_story_list)
 
         if not parsed_story_list:
             raise ValueError("LLM 결과 문자열에서 동화책 문장을 추출해내지 못했습니다.")
@@ -41,6 +35,8 @@ async def ai_llm_story_run(input_date: list) -> list:
             cleaned_story = cleaned_story.strip().strip('"').strip("'")
             final_list.append(cleaned_story)
 
+        for i in final_list:
+            print(f'{i}\n')
         return final_list
     
     except Exception as e:
