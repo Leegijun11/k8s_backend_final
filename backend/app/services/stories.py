@@ -42,12 +42,13 @@ class Story_Service:
                     selected_milestones.append(m)
                 elif m.m_achieved is False and m.d_id in d_ids:
                     selected_milestones.append(m)
-
+            print(selected_milestones)
+            print(d_ids)
             total_count = len(selected_milestones)
             if total_count < 8 or total_count > 16:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                     detail=f"동화책을 만들기 위한 일기 개수가 맞지 않습니다. (현재: {total_count}개)")
-
+            
             selected_milestones = sorted(selected_milestones, key=lambda m: m.m_achieved_date)
 
             selected_diaries = []
@@ -75,7 +76,7 @@ class Story_Service:
                 })
 
             llm = await ai_llm_story_run(input_list)
-
+            print(f"AI가 생성한 스토리 개수({len(llm)}개)와 선택한 일기 개수({len(selected_diaries)}개)")
             if len(selected_diaries) != len(llm):
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
