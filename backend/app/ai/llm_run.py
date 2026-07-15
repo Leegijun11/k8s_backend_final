@@ -10,7 +10,7 @@ from datetime import date, datetime
 
 
 
-async def ai_llm_run(input_data: str, age: int=38):
+async def ai_llm_run(input_data: str, age: int):
     try:
         start_time = time.time()
         # 왓슨 연결
