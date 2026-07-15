@@ -3,10 +3,10 @@ from datetime import date
 from typing import Optional
 
 class Story_Base(BaseModel):
-    s_fcover: str | None = None
-    s_bcover: str | None = None
-    s_creator: str | None = None
-    s_comment: str | None = None
+    s_fcover: str = "없음"
+    s_bcover: str = "없음"
+    s_creator: str = "없음"
+    s_comment: str = "없음"
 
 
 class Story_Create(Story_Base):
