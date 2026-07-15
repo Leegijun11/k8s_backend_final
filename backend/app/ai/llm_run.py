@@ -186,30 +186,42 @@ async def ai_llm_run(input_data: str, age: int=38):
                 total_count = sum(numbers) if len(numbers) > 1 and "간식" in combined else max(numbers)
                 return str(total_count)+"회"
             return "0회"
-
+        
 
         def clean_sleep_format(tokens_list: list, original_input: str) -> str:
             if not tokens_list or "없음" in tokens_list:
                 return "없음"
-            combined = "".join(tokens_list)
-            match = re.search(r'(\d+\s*(?:분|시간))', combined)
+            
+            combined = " ".join(tokens_list)
+            
+            sleep_pattern = r'(\d+(?:\.\d+)?\s*시간(?:\s*\d+\s*분)?|\d+(?:\.\d+)?\s*분)'
+            
+            match = re.search(sleep_pattern, combined)
             if match:
                 return match.group(1).strip()
-            backup_match = re.search(r'(\d+\s*(?:분|시간))', original_input)
+                
+            backup_match = re.search(sleep_pattern, original_input)
             if backup_match:
                 return backup_match.group(1).strip()
-            return "없음"
+                
+            return ""
 
 
         def clean_temp_format(tokens_list: list, original_input: str) -> str:
-            combined = "".join(tokens_list) if tokens_list else ""
-            match = re.search(r'(\d+\.\d+)', combined)
+            combined = " ".join(tokens_list) if tokens_list else ""
+
+            temp_pattern = r'(\d+\.\d+)(?!\s*(?:시간|분))'
+            
+            match = re.search(temp_pattern, combined)
             if match:
                 return f"{match.group(1)}도"
-            backup_match = re.search(r'(\d+\.\d+)', original_input)
+                
+            backup_match = re.search(temp_pattern, original_input)
             if backup_match:
                 return f"{backup_match.group(1)}도"
+                
             return ""
+
 
 
         valid_p_emotions = ["뿌듯하다", "지치다", "답답하다", "미안하다", "행복하다", "걱정되다"]

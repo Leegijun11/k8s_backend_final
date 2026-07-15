@@ -42,7 +42,7 @@ class Story_Service:
                     selected_milestones.append(m)
                 elif m.m_achieved is False and m.d_id in d_ids:
                     selected_milestones.append(m)
-            print(selected_milestones)
+            
             print(d_ids)
             total_count = len(selected_milestones)
             if total_count < 8 or total_count > 16:
@@ -54,12 +54,15 @@ class Story_Service:
             selected_diaries = []
             for milestone in selected_milestones:
                 matched_diary = next((d for d in diaries if d.d_id == milestone.d_id), None)
+                print(matched_diary.d_id)
                 if matched_diary:
                     import copy
                     cloned_diary = copy.copy(matched_diary)
                     cloned_diary.status = "True" if milestone.m_achieved else "False"
                     cloned_diary.app_milestone = milestone.milestone.app_milestone if milestone.milestone else ""
                     selected_diaries.append(cloned_diary)
+
+                
 
             title = story.s_name if story.s_name else f'{story.start_date}~{story.end_date} 제작 동화책'
             story_db_data = story.model_dump(exclude={"start_date", "end_date"}) | {"s_name": title}

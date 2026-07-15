@@ -89,6 +89,7 @@ class Diary_Service:
                                 current_status = bool(ms_obj.get("status", False))
                                 break
                             
+                    print(m_name, age)
                     m_find = await Milestone_Crud.crud_milestones_find(db, m_name, age+2)
                     
                     if m_find is not None:
