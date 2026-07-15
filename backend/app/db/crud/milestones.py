@@ -16,9 +16,16 @@ class Milestone_Crud:
                                    b_id : int, 
                                    months : int, 
                                    category : str) -> list[MilestoneStatus_Read] | None:
-        margin = 2 if months < 24 else 1
-        min_months = max(0, months - margin)
-        max_months = months + margin
+        INTERVALS = [
+            (0, 2), (3, 4), (5, 6), (7, 8), (9, 10), (11, 12),
+            (13, 18), (19, 24), (25, 36), (37, 48), (49, 60)
+        ]
+        
+        min_months, max_months = months, months
+        for start, end in INTERVALS:
+            if start <= months <= end:
+                min_months, max_months = start, end
+                break
 
         sub_query = (
             select(
