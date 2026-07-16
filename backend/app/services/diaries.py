@@ -7,6 +7,7 @@ from app.db.crud.babies import Baby_Crud
 from app.db.crud.milestones import Milestone_Crud
 from app.ai.llm_run import ai_llm_run
 from datetime import date, datetime, timezone
+from sqlalchemy import func
 
 class Diary_Service:
 
@@ -24,7 +25,7 @@ class Diary_Service:
                     )
                 
                 images = await Diary_Crud.crud_diaries_get_images(db, diary.b_id, diary.d_date)
-                             
+                print(diary.d_date)
                 baby_date = await Baby_Crud.crud_babies_detail(db, diary.b_id)
                 b_date = baby_date.b_birth
 
@@ -72,7 +73,7 @@ class Diary_Service:
                     "d_temp": llm_result.get("d_temp"),
                     "b_id": diary.b_id,
                 }
-
+                
                 new_diary = await Diary_Crud.crud_diaries_create(db, diary_data)
 
 
