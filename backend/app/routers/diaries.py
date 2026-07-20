@@ -32,12 +32,12 @@ async def router_diaries_list(b_id: int, d_date: date, db: AsyncSession = Depend
     return await Diary_Service.service_diaries_list(db, b_id, d_date)
 
 # 일기 수정
-@router.put('/edit/{d_id}', response_model=Diary_Detail)
+@router.put('/edit', response_model=Diary_Detail)
 async def router_diaries_update(d_id: int, update_diary: Diary_Update, db: AsyncSession = Depends(get_db)):
     return await Diary_Service.service_diaries_update(db, d_id, update_diary)
 
 # 일기 상세
-@router.get('/{d_id}', response_model=Diary_Detail)
+@router.get('/detail', response_model=Diary_Detail)
 async def router_diaries_detail(d_id: int, db: AsyncSession = Depends(get_db)):
     return await Diary_Service.service_diaries_detail(db, d_id)
 

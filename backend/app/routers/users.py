@@ -93,7 +93,7 @@ async def router_users_delete(response:Response, u_id:int=Depends(auth_get_u_id)
 
 
 #다른 유저 정보
-@router.get('/{u_id}',response_model=User_Public)
+@router.get('/',response_model=User_Public)
 async def router_users_get_u_id(u_id:int, db:AsyncSession=Depends(get_db)):
     other_user_data=await User_Service.service_users_get_u_id(db, u_id)
     return other_user_data
