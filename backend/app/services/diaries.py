@@ -7,7 +7,6 @@ from app.db.crud.babies import Baby_Crud
 from app.db.crud.milestones import Milestone_Crud
 from app.ai.llm_run import ai_llm_run
 from datetime import date, datetime, timezone
-from sqlalchemy import func
 
 class Diary_Service:
 
@@ -25,7 +24,6 @@ class Diary_Service:
                     )
                 
                 images = await Diary_Crud.crud_diaries_get_images(db, diary.b_id, diary.d_date)
-                print(diary.d_date)
                 baby_date = await Baby_Crud.crud_babies_detail(db, diary.b_id)
                 b_date = baby_date.b_birth
 
@@ -60,9 +58,9 @@ class Diary_Service:
                     d_image = d_image.replace("\\", "/")
                     if "uploads/" in d_image:
                         d_image = "uploads/" + d_image.split("uploads/", 1)[1]
-
+                
                 diary_data = {
-                    "d_title": f"{diary.d_date} ai 일기",
+                    "d_title": f"{diary.d_date.strftime('%Y-%m-%d')} ai 일기",
                     "d_content": llm_result.get("d_content"),
                     "d_label": llm_result.get("d_label"),
                     "d_date": diary.d_date,
@@ -73,12 +71,12 @@ class Diary_Service:
                     "d_temp": llm_result.get("d_temp"),
                     "b_id": diary.b_id,
                 }
-                
+
                 new_diary = await Diary_Crud.crud_diaries_create(db, diary_data)
 
 
                 m_content = llm_result.get("d_mile")
-                print(m_content)
+
                 m_names = [m["item"].strip() for m in m_content if isinstance(m, dict) and m.get("item")] if isinstance(m_content, list) else []
                     
                 for m_name in m_names:

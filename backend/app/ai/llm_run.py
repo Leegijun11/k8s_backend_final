@@ -43,7 +43,7 @@ async def ai_llm_run(input_data: str, age: int):
                     extracted = {}
 
                     patterns = {
-                        "핵심어": r'"핵심어"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
+                        # "핵심어": r'"핵심어"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
                         "부모감정": r'"부모감정"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
                         "아이감정": r'"아이감정"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
                         "식사": r'"식사"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
@@ -80,11 +80,11 @@ async def ai_llm_run(input_data: str, age: int):
 
 
         merged_labels = {
-            "핵심어": [], "부모감정": [], "아이감정": [], 
+            "부모감정": [], "아이감정": [], 
             "식사": [], "배변": [], "수면": [], "시간": [], "체온": [], 
             "육아범주": [], "사진라벨":[], "마일스톤":[]
         }
-
+        
         INVALID_VALUES = {"없음", "정보없음", "null", "na", "n/a", "-", ""}
 
         for idx, label_dict in enumerate(label_list):
@@ -120,26 +120,26 @@ async def ai_llm_run(input_data: str, age: int):
 
 
 
-        clean_words = []
-        for w in dict.fromkeys(merged_labels["핵심어"]):
-            if re.match(r'^[가-힣0-9\s]+$', w):
-                clean_token = w.strip()
+        # clean_words = []
+        # for w in dict.fromkeys(merged_labels["핵심어"]):
+        #     if re.match(r'^[가-힣0-9\s]+$', w):
+        #         clean_token = w.strip()
                 
-                if any(c.isdigit() for c in clean_token):
-                    clean_words.append(w)
-                    continue
+        #         if any(c.isdigit() for c in clean_token):
+        #             clean_words.append(w)
+        #             continue
                 
-                is_valid = False
-                if len(clean_token) >= 2:
-                    for i in range(len(clean_token) - 1):
-                        if clean_token[i:i+2] in input_data.replace(" ", ""):
-                            is_valid = True
-                            break
-                else:
-                    if clean_token in input_data:
-                        is_valid = True
-                if is_valid:
-                    clean_words.append(w)
+        #         is_valid = False
+        #         if len(clean_token) >= 2:
+        #             for i in range(len(clean_token) - 1):
+        #                 if clean_token[i:i+2] in input_data.replace(" ", ""):
+        #                     is_valid = True
+        #                     break
+        #         else:
+        #             if clean_token in input_data:
+        #                 is_valid = True
+        #         if is_valid:
+        #             clean_words.append(w)
 
 
         clean_miles = []
@@ -250,7 +250,7 @@ async def ai_llm_run(input_data: str, age: int):
 
         labels = {
             "원본": input_data,
-            "핵심어": ", ".join(clean_words) if clean_words else "없음",
+            # "핵심어": ", ".join(clean_words) if clean_words else "없음",
             "부모감정": p_emotion,
             "아이감정": b_emotion,
             "식사": clean_to_pure_number(merged_labels["식사"]),
@@ -264,8 +264,8 @@ async def ai_llm_run(input_data: str, age: int):
         }
 
         llm_data_input = (
-            f"원본: {labels['원본']}\n"
-            f"핵심어: {labels['핵심어']}\n"
+            f"원본: {input_data}\n"
+            # f"핵심어: {labels['핵심어']}\n"
             f"부모감정: {labels['부모감정']}\n"
             f"아이감정: {labels['아이감정']}\n"
             f"식사: {labels['식사']}\n"
@@ -290,8 +290,8 @@ async def ai_llm_run(input_data: str, age: int):
         execution_time = end_time - start_time
         print(f"실행 시간: {execution_time:.5f} 초")
         return {
-            "d_main": labels["원본"],
-            "d_word": labels["핵심어"],
+            "d_main": input_data,
+            # "d_word": labels["핵심어"],
             "d_p_label": labels["부모감정"],
             "d_label": labels["아이감정"], 
             "d_eat": labels["식사"],
@@ -304,7 +304,8 @@ async def ai_llm_run(input_data: str, age: int):
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"자동 일기 파이프라인 가동 실패 원인: {str(e)}")
+        raise e
+        # raise HTTPException(status_code=500, detail=f"자동 일기 파이프라인 가동 실패 원인: {str(e)}")
 
 
 
@@ -328,7 +329,7 @@ async def loop_test():
         
         print(f"--- 분석 결과 ({idx + 1}) ---") 
         print("원본:", ai["d_main"])
-        print("핵심:", ai["d_word"])
+        # print("핵심:", ai["d_word"])
         print("부모:", ai['d_p_label'])
         print("아이:", ai['d_label'])
         print("식사:", ai['d_eat'])
