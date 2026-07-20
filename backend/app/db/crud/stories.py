@@ -30,7 +30,7 @@ class Story_Crud:
     @staticmethod
     async def crud_stories_list(db: AsyncSession, b_id: int) -> list[Story]:
         result = await db.execute(
-            select(Story).filter(Story.b_id == b_id)
+            select(Story).filter(Story.b_id == b_id).order_by(Story.s_id.desc())
         )
         return result.scalars().all()
 

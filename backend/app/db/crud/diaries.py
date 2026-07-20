@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from sqlalchemy import select, func
 from datetime import date, datetime, timedelta
 from sqlalchemy import select, exists
 
@@ -52,7 +52,7 @@ class Diary_Crud:
             )
         )
 
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     # 일기 생성
     @staticmethod
@@ -77,8 +77,8 @@ class Diary_Crud:
         result = await db.execute(
             select(Diary).where(
                 Diary.b_id == b_id,
-                Diary.d_date == d_date
-            )
+                func.date(Diary.d_date) == d_date
+            ).order_by(Diary.d_id.desc())
         )
 
         return result.scalars().all()
