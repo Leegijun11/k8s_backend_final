@@ -1,46 +1,82 @@
 import asyncio
 import re
+import json
 from fastapi import HTTPException
 from app.ai.llm_config import get_watsonx
 from app.ai.llm_main import LLMDiary
 
-async def ai_llm_story_run(input_date: list) -> list:
+
+async def ai_llm_story_run(input_date: list) -> tuple:
     try:
         config = get_watsonx()
         pipeline = LLMDiary()
+        
+        # LLM 실행 및 공백 제거
         raw_story_string = await pipeline.ai_llm_story_model_run(input_date, config)
-
         cleaned_string = raw_story_string.strip()
+        
+        # 마크다운 코드 블록 제거 (```json 또는 ``` 제거)
         cleaned_string = re.sub(r"^```[a-zA-Z]*\s*", "", cleaned_string)
         cleaned_string = re.sub(r"\s*```$", "", cleaned_string)
         cleaned_string = cleaned_string.strip()
+        
+        # 중괄호 { } 내부의 JSON 객체 데이터 추출 (가장 바깥쪽 괄호 기준)
+        match = re.search(r"\{.*\}", cleaned_string, re.DOTALL)
+        if not match:
+            raise ValueError("LLM 응답에서 유효한 JSON 형식({ })을 찾을 수 없습니다.")
+            
+        json_style_string = match.group(0)
+        
+        # 변수 초기화
+        story_title = "제목 없음"
+        parsed_story_list = []
+        
+        try:
+            # 안전하게 JSON 구조로 파싱
+            parsed_data = json.loads(json_style_string)
+            
+            # JSON 데이터 처리
+            if isinstance(parsed_data, dict):
+                # 제목 추출 (존재할 경우)
+                if "story_title" in parsed_data:
+                    story_title = str(parsed_data["story_title"]).strip()
+                
+                # 리스트 추출
+                if "diary_list" in parsed_data:
+                    parsed_story_list = parsed_data["diary_list"]
+                else:
+                    raise ValueError("JSON 구조 내에서 diary_list를 찾을 수 없습니다.")
+            elif isinstance(parsed_data, list):
+                # 만약 기존처럼 배열 형태로 들어왔을 때를 대비한 방어 코드
+                parsed_story_list = parsed_data
+            else:
+                raise ValueError("올바른 JSON 데이터 형식이 아닙니다.")
+                
+            if not isinstance(parsed_story_list, list):
+                raise ValueError("추출된 데이터가 리스트 형식이 아닙니다.")
+                
+        except json.JSONDecodeError:
+            raise ValueError("LLM 결과 문자열을 JSON 데이터로 변환하는 데 실패했습니다.")
 
-        match = re.search(r"\[.*\]", cleaned_string, re.DOTALL)
-        if match:
-            cleaned_string = match.group(0)
-        else:
-            raise ValueError("LLM 응답에서 유효한 리스트 형식([ ])을 찾을 수 없습니다.")
-
-        parsed_story_list = re.findall(r'"([^"\\]*(?:\\.[^"\\]*)*)"', cleaned_string)
-
-        if not parsed_story_list:
-            parsed_story_list = re.findall(r"'([^'\\]*(?:\\.[^'\\]*)*)'", cleaned_string)
-
-        if not parsed_story_list:
-            raise ValueError("LLM 결과 문자열에서 동화책 문장을 추출해내지 못했습니다.")
-
+        # 문장 정제 및 줄바꿈 처리
         final_list = []
         for story in parsed_story_list:
-            cleaned_story = story.replace('\\\\n', '\n').replace('\\n', '\n')
-            cleaned_story = cleaned_story.strip().strip('"').strip("'")
+            if not isinstance(story, str):
+                story = str(story)
+            cleaned_story = story.strip()
             final_list.append(cleaned_story)
-
+            
+        # 콘솔 출력 (제목 먼저 출력 후 문장 리스트 출력)
+        print(f"[제목]: {story_title}")
+        print("=" * 40)  # 구분선
         for i in final_list:
             print(f'{i}\n')
-        return final_list
-    
+            
+        return final_list, story_title
+        
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"디지털북 파이프라인 가동 실패 원인: {str(e)}")
+
 
 
 if __name__ == "__main__":

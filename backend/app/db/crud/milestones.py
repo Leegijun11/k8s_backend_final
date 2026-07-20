@@ -3,7 +3,7 @@ from sqlalchemy import select, func, desc
 from sqlalchemy.orm import joinedload
 from app.db.models.milestones import Milestone
 from app.db.models.babymilestones import BabyMilestone
-
+from app.db.models.diaries import Diary
 from app.db.scheme.milestones import Milestone_Read, MilestoneStatus_Read
 from app.db.scheme.babymilestones import BabyMilestone_Create, BabyMilestone_Update
 
@@ -105,16 +105,15 @@ class Milestone_Crud:
 
     # 베이비 마일스톤 m_id가 동일한 실패 목록
     @staticmethod
-    async def crud_milestones_bm_false_list(db: AsyncSession, b_id: int):
-        from app.db.models.diaries import Diary
-
+    async def crud_milestones_bm_false_list(db: AsyncSession, b_id: int, start_date : date, end_date : date):
         # 달성된 마일스톤에 연결된 d_id 목록
         achieved_result = await db.execute(
             select(BabyMilestone.d_id)
             .where(
                 BabyMilestone.b_id == b_id,
                 BabyMilestone.m_achieved == True,
-                BabyMilestone.d_id != None
+                BabyMilestone.d_id != None,
+                BabyMilestone.m_achieved_date.between(start_date, end_date)
             )
         )
         achieved_d_ids = [row[0] for row in achieved_result.fetchall()]

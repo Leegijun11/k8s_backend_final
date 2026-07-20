@@ -8,6 +8,7 @@ from app.db.scheme.story_pages import Story_Page_Create, Story_Page_Read
 from app.db.scheme.diaries import Diary_Read
 
 from app.db.database import get_db
+from datetime import date
 
 
 router = APIRouter(prefix="/stories", tags=["Stories"])
@@ -31,8 +32,8 @@ async def router_stories_list(b_id: int, db: AsyncSession = Depends(get_db)):
 
 # 디지털북 일기 선택 목록 (← /{s_id} 보다 반드시 위에)
 @router.get('/select_diaries', response_model=list[Diary_Read])
-async def router_stories_select_diaries(b_id: int, db: AsyncSession = Depends(get_db)):
-    return await Story_Service.service_stories_diaries_select(db, b_id)
+async def router_stories_select_diaries(b_id: int, start_date:date, end_date:date, db: AsyncSession = Depends(get_db)):
+    return await Story_Service.service_stories_diaries_select(db, b_id, start_date, end_date)
 
 
 # 디지털북 페이지 목록 (← /{s_id} 보다 위에)
