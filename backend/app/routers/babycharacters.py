@@ -13,7 +13,7 @@ async def routers_babycharacters_create(baby:BabyCharacter_Create, db:AsyncSessi
     return db_data
     
 # 2. 아이 세부 정보 조회
-@router.get("/{c_id}", response_model=BabyCharacter_Read)
+@router.get("/", response_model=BabyCharacter_Read)
 async def routers_babycharacters_read(c_id:int, db:AsyncSession=Depends(get_db)):
     db_data=await BabyCharacterService.service_babycharacter_read(c_id, db)
     return db_data

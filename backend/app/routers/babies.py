@@ -24,7 +24,7 @@ async def routers_babies_list(u_id:int = Depends(auth_get_u_id), db:AsyncSession
     return db_data
     
 # 3. 아이 세부 정보
-@router.get("/{b_id}", response_model=Baby_Read)
+@router.get("/", response_model=Baby_Read)
 async def routers_babies_read(b_id:int, db:AsyncSession=Depends(get_db)):
     db_data=await BabyService.service_babies_read(db, b_id)
     return db_data
