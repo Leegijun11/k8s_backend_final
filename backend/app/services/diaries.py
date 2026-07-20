@@ -12,8 +12,13 @@ class Diary_Service:
 
     # 일기 생성
     @staticmethod
-    async def service_diaries_create(db: AsyncSession, diary: Diary_Create, ai_create: bool):
+    async def service_diaries_create(db: AsyncSession, diary: Diary_Create, ai_create: bool, u_id: int):
         try:
+            # ★ 추가: 이 b_id가 로그인한 u_id의 그룹 아기인지 확인
+            has_access = await Diary_Crud.crud_check_diary_access(db, diary.b_id, u_id)
+            if not has_access:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="일기를 작성할 권한이 없습니다")
+
             if ai_create:
                 raw_text = diary.original_text
 
@@ -89,6 +94,7 @@ class Diary_Service:
                                 current_status = bool(ms_obj.get("status", False))
                                 break
                             
+                    print(m_name, age)
                     m_find = await Milestone_Crud.crud_milestones_find(db, m_name, age+2)
                     
                     if m_find is not None:
@@ -126,70 +132,60 @@ class Diary_Service:
 
             await db.commit()
             await db.refresh(new_diary)
-
             return new_diary
 
         except HTTPException:
             await db.rollback()
             raise
-
         except Exception as e:
             await db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"일기 생성 실패: {e}"
-            )
-        
-    # 날짜별 일기 목록
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"일기 생성 실패: {e}")
+
+
+    # 날짜별 일기 목록 (이미 완료됨, 그대로 유지)
     @staticmethod
-    async def service_diaries_list(db: AsyncSession, b_id: int, d_date: date):
+    async def service_diaries_list(db: AsyncSession, b_id: int, d_date: date, u_id: int):
         try:
+            has_access = await Diary_Crud.crud_check_diary_access(db, b_id, u_id)
+            if not has_access:
+                raise HTTPException(status_code=403, detail="접근 권한이 없습니다")
             diaries = await Diary_Crud.crud_diaries_list(db, b_id, d_date)
-
-            if not diaries:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="일기를 불러오는데 실패했습니다"
-                )
-
             return diaries
-
         except HTTPException:
             raise
-
         except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"일기를 불러오는데 실패했습니다: {e}"
-            )
-        
-    # 일기 상세
+            raise HTTPException(status_code=500, detail=f"일기 목록을 불러오는데 실패했습니다: {e}")
+
+
+    # 일기 상세 (이미 완료됨, 그대로 유지)
     @staticmethod
-    async def service_diaries_detail(db: AsyncSession, d_id: int):
+    async def service_diaries_detail(db: AsyncSession, d_id: int, u_id: int):
         try:
             diary = await Diary_Crud.crud_diaries_detail(db, d_id)
-
             if not diary:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="일기를 불러오는데 실패했습니다"
-                )
-
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="일기를 불러오는데 실패했습니다")
+            has_access = await Diary_Crud.crud_check_diary_access(db, diary.b_id, u_id)
+            if not has_access:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="일기를 볼 권한이 없습니다")
             return diary
-
         except HTTPException:
             raise
-
         except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"일기를 불러오는데 실패했습니다: {e}"
-            )
-    
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"일기를 불러오는데 실패했습니다: {e}")
+
+
     # 일기 수정
     @staticmethod
-    async def service_diaries_update(db: AsyncSession, d_id: int, update_diary: Diary_Update):
+    async def service_diaries_update(db: AsyncSession, d_id: int, update_diary: Diary_Update, u_id: int):
         try:
+            diary = await Diary_Crud.crud_diaries_detail(db, d_id)
+            if not diary:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="일기를 찾을 수 없습니다")
+
+            has_access = await Diary_Crud.crud_check_diary_access(db, diary.b_id, u_id)
+            if not has_access:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="수정 권한이 없습니다")
+
             update_data = update_diary.model_dump(exclude_unset=True)
 
             if update_data.get("d_image"):
@@ -200,50 +196,44 @@ class Diary_Service:
             updated_diary = await Diary_Crud.crud_diaries_update(db, d_id, update_data)
 
             if not updated_diary:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="일기 수정에 실패했습니다"
-                )
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="일기 수정에 실패했습니다")
 
             await db.commit()
             await db.refresh(updated_diary)
-
             return updated_diary
 
         except HTTPException:
+            await db.rollback()
             raise
-
         except Exception as e:
             await db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"일기 수정에 실패했습니다: {e}"
-            )
-        
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"일기 수정에 실패했습니다: {e}")
+
+
     # 일기 삭제
     @staticmethod
-    async def service_diaries_delete(db: AsyncSession, d_id: int):
+    async def service_diaries_delete(db: AsyncSession, d_id: int, u_id: int):
         try:
+            diary = await Diary_Crud.crud_diaries_detail(db, d_id)
+            if not diary:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="일기를 찾을 수 없습니다")
+
+            has_access = await Diary_Crud.crud_check_diary_access(db, diary.b_id, u_id)
+            if not has_access:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="삭제 권한이 없습니다")
+
             deleted_diary = await Diary_Crud.crud_diaries_del(db, d_id)
 
             if not deleted_diary:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="일기 삭제에 실패했습니다"
-                )
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="일기 삭제에 실패했습니다")
 
             d_date = deleted_diary.d_date
-
             await db.commit()
-
             return {"msg": f"{d_date} 일기를 삭제하였습니다."}
 
         except HTTPException:
+            await db.rollback()
             raise
-
         except Exception as e:
             await db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"일기 삭제에 실패했습니다: {e}"
-            )
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"일기 삭제에 실패했습니다: {e}")

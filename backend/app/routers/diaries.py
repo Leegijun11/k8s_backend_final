@@ -1,10 +1,4 @@
-#router_diaries_create : 일기 생성
-#router_diaries_list : 날짜별 일기 목록
-#router_diaries_detail : 일기 상세
-#router_diaries_edit : 일기 수정
-#router_diaries_del : 일기 삭제
-
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.scheme.diaries import Diary_Create, Diary_Read, Diary_List_Item, Diary_Detail, Diary_Update
 from app.services.diaries import Diary_Service
@@ -18,12 +12,17 @@ router = APIRouter(prefix="/diaries", tags=["Diaries"])
 
 
 # 일기 생성
-@router.post('/create', response_model=Diary_Read)
-async def router_diaries_create(diary: Diary_Create, ai_create:bool=True, db: AsyncSession = Depends(get_db)):
+@router.post('/', response_model=Diary_Read)
+async def router_diaries_create(
+    diary: Diary_Create,
+    ai_create: bool = True,
+    db: AsyncSession = Depends(get_db),
+    u_id: int = Depends(auth_get_u_id),
+):
     if ai_create:
-        return await Diary_Service.service_diaries_create(db, diary, ai_create)
+        return await Diary_Service.service_diaries_create(db, diary, ai_create, u_id)
     else:
-        return await Direct_Diaries_Service.service_direct_diaries_create(db, diary_create=diary)
+        return await Direct_Diaries_Service.service_direct_diaries_create(db, diary_create=diary, u_id=u_id)
 
 
 # 날짜별 일기 목록
@@ -43,6 +42,10 @@ async def router_diaries_detail(d_id: int, db: AsyncSession = Depends(get_db)):
 
 
 # 일기 삭제
-@router.delete('/del')
-async def router_diaries_delete(d_id: int, db: AsyncSession = Depends(get_db)):
-    return await Diary_Service.service_diaries_delete(db, d_id)
+@router.delete('/{d_id}')
+async def router_diaries_delete(
+    d_id: int,
+    db: AsyncSession = Depends(get_db),
+    u_id: int = Depends(auth_get_u_id),
+):
+    return await Diary_Service.service_diaries_delete(db, d_id, u_id)

@@ -75,6 +75,14 @@ async def router_forums_context(f_id: int,
     return await Forum_Service.service_forums_context(db, f_id=f_id, u_id=u_id)
 
 
+#게시글 수정용 상세 조회 (본인 글만)
+@router.get("/edit/{f_id}", response_model=Forum_Read)
+async def router_forums_edit_detail(f_id: int,
+                                     u_id: int = Depends(auth_get_u_id),
+                                     db: AsyncSession = Depends(get_db)):
+    return await Forum_Service.service_forums_edit_detail(db, f_id=f_id, u_id=u_id)
+
+
 #게시글 정보 수정
 @router.put("/edit/{f_id}")
 async def router_forums_update(f_id: int,

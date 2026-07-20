@@ -19,7 +19,7 @@ from app.db.models.forumlikes import ForumLike
 
 class Forums_CRUD:
 
-    #게시글 생성
+    #게시글 생성1
     @staticmethod
     async def crud_forum_create(db: AsyncSession, forum_data:Forum_Create , u_id:int):
         new_forum=Forums(
