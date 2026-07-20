@@ -26,19 +26,35 @@ async def router_diaries_create(
 
 
 # 날짜별 일기 목록
-@router.get('/list', response_model=list[Diary_List_Item])
-async def router_diaries_list(b_id: int, d_date: date, db: AsyncSession = Depends(get_db)):
-    return await Diary_Service.service_diaries_list(db, b_id, d_date)
+@router.get('/', response_model=list[Diary_List_Item])
+async def router_diaries_list(
+    b_id: int,
+    d_date: date,
+    db: AsyncSession = Depends(get_db),
+    u_id: int = Depends(auth_get_u_id),
+):
+    return await Diary_Service.service_diaries_list(db, b_id, d_date, u_id)
 
-# 일기 수정
-@router.put('/edit', response_model=Diary_Detail)
-async def router_diaries_update(d_id: int, update_diary: Diary_Update, db: AsyncSession = Depends(get_db)):
-    return await Diary_Service.service_diaries_update(db, d_id, update_diary)
 
 # 일기 상세
-@router.get('/detail', response_model=Diary_Detail)
-async def router_diaries_detail(d_id: int, db: AsyncSession = Depends(get_db)):
-    return await Diary_Service.service_diaries_detail(db, d_id)
+@router.get('/{d_id}', response_model=Diary_Detail)
+async def router_diaries_detail(
+    d_id: int,
+    db: AsyncSession = Depends(get_db),
+    u_id: int = Depends(auth_get_u_id),
+):
+    return await Diary_Service.service_diaries_detail(db, d_id, u_id)
+
+
+# 일기 수정
+@router.put('/{d_id}', response_model=Diary_Detail)
+async def router_diaries_update(
+    d_id: int,
+    update_diary: Diary_Update,
+    db: AsyncSession = Depends(get_db),
+    u_id: int = Depends(auth_get_u_id),
+):
+    return await Diary_Service.service_diaries_update(db, d_id, update_diary, u_id)
 
 
 # 일기 삭제
