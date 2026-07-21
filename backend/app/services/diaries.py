@@ -7,6 +7,7 @@ from app.db.crud.babies import Baby_Crud
 from app.db.crud.milestones import Milestone_Crud
 from app.ai.llm_run import ai_llm_run
 from datetime import date, datetime, timezone
+from app.db.crud.logs import Log_Crud 
 
 class Diary_Service:
 
@@ -139,6 +140,111 @@ class Diary_Service:
         except Exception as e:
             await db.rollback()
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"일기 생성 실패: {e}")
+        
+
+    # 일기 생성 (시스템 자동 생성 전용 - 스케줄러 호출)
+    @staticmethod
+    async def service_diaries_create_system(db: AsyncSession, b_id: int):
+        try:
+            today = date.today()
+
+            # 오늘 로그 조회
+            log = await Log_Crud.crud_logs_find_date_b_id(db, b_id)
+
+            if not log or not log.l_content:
+                return None
+
+            raw_text = log.l_content
+
+            images = await Diary_Crud.crud_diaries_get_images(db, b_id, today)
+            baby_date = await Baby_Crud.crud_babies_detail(db, b_id)
+            b_date = baby_date.b_birth
+
+            if isinstance(b_date, datetime):
+                b_date = b_date.date()
+            elif isinstance(b_date, str):
+                b_date = datetime.strptime(b_date, "%Y-%m-%d %H:%M:%S").date()
+
+            days = (today - b_date).days
+            age = int(days / 30.43)
+            age = max(0, age)
+
+            llm_result = await ai_llm_run(raw_text, age)
+            d_i_label = llm_result.get("d_i_label", "")
+
+            clean_labels = [lbl.strip() for lbl in d_i_label.split(",")]
+            d_image = None
+
+            if images:
+                for image in images:
+                    label = (image.i_label or "").strip()
+                    if label in clean_labels:
+                        d_image = image.i_image
+                        break
+
+            if d_image:
+                d_image = d_image.replace("\\", "/")
+                if "uploads/" in d_image:
+                    d_image = "uploads/" + d_image.split("uploads/", 1)[1]
+
+            diary_data = {
+                "d_title": f"{today.strftime('%Y-%m-%d')} ai 일기",
+                "d_content": llm_result.get("d_content"),
+                "d_label": llm_result.get("d_label"),
+                "d_date": today,
+                "d_image": d_image,
+                "d_eat": llm_result.get("d_eat"),
+                "d_sleep": llm_result.get("d_sleep"),
+                "d_toilet": llm_result.get("d_toilet"),
+                "d_temp": llm_result.get("d_temp"),
+                "b_id": b_id,
+            }
+
+            new_diary = await Diary_Crud.crud_diaries_create(db, diary_data)
+
+            m_content = llm_result.get("d_mile")
+            m_names = [m["item"].strip() for m in m_content if isinstance(m, dict) and m.get("item")] if isinstance(m_content, list) else []
+
+            for m_name in m_names:
+                current_status = False
+
+                if isinstance(m_content, list):
+                    for ms_obj in m_content:
+                        if isinstance(ms_obj, dict) and ms_obj.get("item", "").strip() == m_name:
+                            current_status = bool(ms_obj.get("status", False))
+                            break
+
+                m_find = await Milestone_Crud.crud_milestones_find(db, m_name, age + 2)
+
+                if m_find is not None:
+                    bm_find = await Milestone_Crud.crud_milestones_babymilestone_find(db, m_find, b_id)
+
+                    bm_data = {
+                        "b_id": b_id,
+                        "d_id": new_diary.d_id,
+                        "m_id": m_find,
+                        "m_achieved": current_status,
+                        "m_achieved_date": new_diary.d_date
+                    }
+
+                    if bm_find is None:
+                        await Milestone_Crud.crud_milestones_babymilestone_create(db, BabyMilestone_Create(**bm_data))
+                    else:
+                        if bm_find.m_achieved is False:
+                            await Milestone_Crud.crud_milestones_babymilestone_create(db, BabyMilestone_Create(**bm_data))
+                        elif bm_find.m_achieved is True:
+                            pass
+
+            await db.commit()
+            await db.refresh(new_diary)
+            return new_diary
+
+        except HTTPException:
+            await db.rollback()
+            raise
+        except Exception as e:
+            await db.rollback()
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"일기 생성 실패: {e}")
 
 
     # 날짜별 일기 목록 (이미 완료됨, 그대로 유지)
@@ -236,3 +342,4 @@ class Diary_Service:
         except Exception as e:
             await db.rollback()
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"일기 삭제에 실패했습니다: {e}")
+        
