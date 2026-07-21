@@ -14,8 +14,7 @@ class Story_Create(Story_Base):
     s_name: str | None=None
     start_date: date
     end_date: date
-
-
+  
 
 class Story_Update(Story_Base):
     s_name: str

@@ -22,4 +22,4 @@ async def routers_babycharacters_read(c_id:int, db:AsyncSession=Depends(get_db))
 @router.put("/edit", response_model=BabyCharacter_Read)
 async def routers_babycharacters_update(c_id:int, baby:BabyCharacter_Update, db:AsyncSession=Depends(get_db)):
     db_data=await BabyCharacterService.service_babycharacter_update(c_id, baby, db)
-    return db_data
+    return db_data 
