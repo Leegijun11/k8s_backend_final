@@ -98,7 +98,7 @@ if __name__ == "__main__":
             "diary": content
         })
 
-    ai_story_list = asyncio.run(ai_llm_story_run(test_input_list))
+    ai_story_list, story_title = asyncio.run(ai_llm_story_run(test_input_list))
     
     print("\n\n==================== [최종 동화책 출력 결과] ====================")
     
