@@ -35,7 +35,6 @@ async def router_diaries_list(
 ):
     return await Diary_Service.service_diaries_list(db, b_id, d_date, u_id)
 
-
 # 일기 상세
 @router.get('/{d_id}', response_model=Diary_Detail)
 async def router_diaries_detail(
