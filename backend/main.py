@@ -99,3 +99,4 @@ if not os.path.exists(FORUM_IMAGES_DIR):
     os.makedirs(FORUM_IMAGES_DIR)
 
 app.mount("/uploads/forum_images", StaticFiles(directory=FORUM_IMAGES_DIR), name="forum_images")
+app.mount("/cover", StaticFiles(directory="cover"), name="cover")
