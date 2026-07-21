@@ -119,7 +119,7 @@ class Milestone_Crud:
         achieved_d_ids = [row[0] for row in achieved_result.fetchall()]
 
         # 달성된 일기 제외한 전체 일기
-        query = select(Diary).where(Diary.b_id == b_id)
+        query = select(Diary).where(Diary.b_id == b_id, Diary.d_date.between(start_date, end_date))
         if achieved_d_ids:
             query = query.where(Diary.d_id.notin_(achieved_d_ids))
 
