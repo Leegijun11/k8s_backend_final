@@ -121,7 +121,29 @@ class Forum_Service:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"게시글 상세 조회 실패: {e}"
-            )  
+            )
+        
+    #게시글 수정용 상세 조회 (작성자 본인 확인)
+    @staticmethod
+    async def service_forums_edit_detail(db: AsyncSession, f_id: int, u_id: int):
+        try:
+            forum = await Forums_CRUD.crud_forum_context(db, f_id=f_id)
+
+            if not forum:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="해당 게시글을 찾을수 없음")
+
+            if forum.u_id != u_id:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="게시글을 수정할 권한이 없음")
+
+            return forum
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"게시글 조회 실패: {e}"
+            )
 
     #게시글 수정
     @staticmethod

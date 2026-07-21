@@ -3,52 +3,13 @@ from app.db.database import get_db
 from app.db.models.babies import Baby
 from app.db.models.parents import Parent
 from app.services.diaries import Diary_Service
-from app.db.scheme.diaries import Diary_Create
 from app.db.crud.alarms import Alarm_Crud
 from app.db.scheme.alarms import Alarm_Create
 from sqlalchemy.future import select
 from datetime import date, timedelta
 import pytz
-from app.db.models.stories import Story
-from app.services.stories import Story_Service
-from app.db.scheme.stories import Story_Create
 
 scheduler = AsyncIOScheduler(timezone=pytz.timezone("Asia/Seoul"))
-
-
-async def generate_first_birthday_books():
-    """매일 자정(00:00)에 실행, 오늘이 만 1세 생일인 아기를 찾아 디지털북 자동 생성"""
-    async for db in get_db():
-        try:
-            result = await db.execute(select(Baby))
-            babies = result.scalars().all()
-            today = date.today()
-
-            for baby in babies:
-                birth = baby.b_birth
-                if isinstance(birth, str):
-                    birth = date.fromisoformat(birth)
-                elif hasattr(birth, "date"):
-                    birth = birth.date()
-
-                try:
-                    first_birthday = birth.replace(year=birth.year + 1)
-                except ValueError:
-                    first_birthday = birth.replace(year=birth.year + 1, day=28)
-
-                if today == first_birthday:
-                    try:
-                        story_data = Story_Create(
-                            b_id=baby.b_id,
-                            start_date=birth,
-                            end_date=today
-                        )
-                        await Story_Service.service_stories_create(db, story_data)
-                        print(f"[story] b_id={baby.b_id} 첫 생일 디지털북 생성 완료")
-                    except Exception as e:
-                        print(f"[story] b_id={baby.b_id} 첫 생일 디지털북 생성 실패: {e}")
-        finally:
-            break
 
 
 async def generate_daily_diaries():
@@ -57,13 +18,16 @@ async def generate_daily_diaries():
         try:
             result = await db.execute(select(Baby))
             babies = result.scalars().all()
-            today = date.today()
 
             for baby in babies:
                 try:
-                    # 1. 일기 생성
-                    diary_data = Diary_Create(b_id=baby.b_id, d_date=today)
-                    await Diary_Service.service_diaries_create(db, diary_data, ai_create=True)
+                    # 1. 일기 생성 (오늘 로그 있으면 생성, 없으면 None 반환 후 스킵)
+                    new_diary = await Diary_Service.service_diaries_create_system(db, baby.b_id)
+
+                    if new_diary is None:
+                        print(f"[diary] b_id={baby.b_id} 오늘 로그 없음 - 일기 생성 스킵")
+                        continue
+
                     print(f"[diary] b_id={baby.b_id} 일기 생성 완료")
 
                     # 2. 해당 아기의 active 부모 목록 조회
@@ -103,7 +67,6 @@ async def generate_daily_diaries():
 
 
 def start_scheduler():
-    scheduler.add_job(generate_daily_diaries, "cron", hour=10, minute=40)
-    scheduler.add_job(generate_first_birthday_books, "cron", hour=16, minute=47)
+    scheduler.add_job(generate_daily_diaries, "cron", hour=10, minute=30)
     scheduler.start()
-    print("[scheduler] 일기 자동 생성 + 첫 생일 디지털북 스케줄러가 시작되었습니다.")
+    print("[scheduler] 일기 자동 생성이 시작되었습니다.")

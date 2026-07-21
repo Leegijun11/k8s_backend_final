@@ -8,8 +8,7 @@ from app.core.scheduler import start_scheduler
 from app.db.database import async_engine, Base
 from app.db.models.milestones import Milestone
 from app.db.models.babymilestones import BabyMilestone
-# ★ 표준 모델 테이블 싱크를 위해 임포트 (기존 임포트 하단에 추가)
-from app.db.models.standards import BabyStandard 
+from app.db.models.standards import BabyStandard
 
 # Models
 from app.db.models.alarms import Alarm
@@ -28,21 +27,24 @@ from app.db.models.forumcommentlikes import ForumCommentLike
 
 # Routers
 from app.routers import (
-    babyimages, babies, babycharacters, record, 
+    babyimages, babies, babycharacters, record,
     users, tips, logs, parent, alarm, diaries, stories,
     forum, forumlikes, forumcomments, forumcommentlikes, health,
-    milestones, standards  # ★ standards 라우터 추가
+    milestones, standards,
+    secure_images,  # ★ 인증/인가를 거치는 이미지 라우터 추가
 )
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    start_scheduler()  
+    start_scheduler()
 
     yield
     await async_engine.dispose()
+
 
 app = FastAPI(title="Backend API", lifespan=lifespan)
 
@@ -55,9 +57,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 async def root():
     return {"message": "home"}
+
 
 # 라우터 등록
 app.include_router(health.router)
@@ -77,20 +81,21 @@ app.include_router(forumlikes.router)
 app.include_router(milestones.router)
 app.include_router(forumcomments.router)
 app.include_router(forumcommentlikes.router)
-app.include_router(standards.router)  # ★ standards 라우터 추가
+app.include_router(standards.router)
+app.include_router(secure_images.router)  # ★ 이미지 보호 라우터 등록
 
 # --- 정적 파일(Static Files) 설정 ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# 1. 기존 uploads 폴더 마운트 (접근 주소: /uploads/...)
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
-app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
-# 2. 상위 폴더의 실제 아기 사진 images 폴더 마운트 (접근 주소: /images/...)
-PARENT_DIR = os.path.dirname(BASE_DIR)
-IMAGES_DIR = os.path.join(PARENT_DIR, "images")
 
-if not os.path.exists(IMAGES_DIR):
-    os.makedirs(IMAGES_DIR)
+# 예전 코드:
+#   app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+#   app.mount("/images", StaticFiles(directory=IMAGES_DIR), name="images")
 
-app.mount("/images", StaticFiles(directory=IMAGES_DIR), name="images")
+# forum_images는 커뮤니티 게시글용이라 공개 유지 (필요 시 이것도 보호 라우터로 전환 가능)
+FORUM_IMAGES_DIR = os.path.join(UPLOAD_DIR, "forum_images")
+if not os.path.exists(FORUM_IMAGES_DIR):
+    os.makedirs(FORUM_IMAGES_DIR)
+
+app.mount("/uploads/forum_images", StaticFiles(directory=FORUM_IMAGES_DIR), name="forum_images")

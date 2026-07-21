@@ -1,10 +1,13 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from datetime import date, datetime, timedelta
+from sqlalchemy import select, exists
 
 from app.db.models.diaries import Diary
 from app.db.models.logs import Log
 from app.db.models.babyimages import BabyImage
+from app.db.models.babies import Baby
+from app.db.models.parents import Parent
 
 
 class Diary_Crud:
@@ -82,18 +85,26 @@ class Diary_Crud:
 
     # 일기 상세 조회
     @staticmethod
-    async def crud_diaries_detail(
-        db: AsyncSession,
-        d_id: int
-    ) -> Diary | None:
-
-        result = await db.execute(
-            select(Diary).where(
-                Diary.d_id == d_id
-            )
-        )
+    async def crud_diaries_detail(db: AsyncSession, d_id: int) -> Diary | None:
+        result = await db.execute(select(Diary).where(Diary.d_id == d_id))
 
         return result.scalars().first()
+    
+
+
+    # baby의 그룹에 해당 유저가 속해있는지 확인해야함
+    @staticmethod
+    async def crud_check_diary_access(db: AsyncSession, b_id: int, u_id: int) -> bool:
+        result = await db.execute(
+            select(
+                exists().where(
+                    Baby.b_id == b_id,
+                    Baby.g_id == Parent.g_id,
+                    Parent.u_id == u_id,
+                )
+            )
+        )
+        return result.scalar()
 
     # 일기 수정
     @staticmethod
