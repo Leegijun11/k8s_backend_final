@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: dearbaby-backend-container
-        image: 335667361860.dkr.ecr.ap-northeast-2.amazonaws.com/dearbaby-backend:latest
+        image: 335667361860.dkr.ecr.ap-northeast-2.amazonaws.com/dearbaby-backend:a4368a1136141194a78e3f1022532125a940f775
         ports:
         - containerPort: 8000
         imagePullPolicy: Always
