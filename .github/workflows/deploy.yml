@@ -35,6 +35,7 @@ jobs:
         run: |
           docker buildx build --platform linux/arm64 \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
             --push .
         working-directory: ./backend
       - name: Update image tag in deployment.yaml
