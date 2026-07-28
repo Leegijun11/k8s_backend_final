@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.db.database import get_db
 
-router = APIRouter(prefix="/health", tags=["Health Check"])
+router = APIRouter(prefix="", tags=["Health Check"])
 
 # 1. 단순 서버 가동 상태 체크 (AWS ALB/Target Group용으로 유용)
 @router.get("")
