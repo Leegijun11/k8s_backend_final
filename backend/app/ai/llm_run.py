@@ -52,7 +52,8 @@ async def ai_llm_run(input_data: str, age: int):
                         "시간": r'"시간"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
                         "체온": r'"체온"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
                         "육아범주": r'"육아범주"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
-                        "사진라벨": r'"사진라벨"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?'
+                        "사진라벨": r'"사진라벨"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?',
+                        "제목": r'"제목"\s*:\s*"?([가-힣ㄱ-ㅎㅏ-ㅣ0-9\s.,!?a-zA-Z]+)"?'
                     }
 
                     for key, pattern in patterns.items():
@@ -82,7 +83,7 @@ async def ai_llm_run(input_data: str, age: int):
         merged_labels = {
             "부모감정": [], "아이감정": [], 
             "식사": [], "배변": [], "수면": [], "시간": [], "체온": [], 
-            "육아범주": [], "사진라벨":[], "마일스톤":[]
+            "육아범주": [], "사진라벨":[], "마일스톤":[], "제목":[]
         }
         
         INVALID_VALUES = {"없음", "정보없음", "null", "na", "n/a", "-", ""}
@@ -150,7 +151,7 @@ async def ai_llm_run(input_data: str, age: int):
                 continue
                 
             w = ms_obj["item"].strip()
-            
+
             if w in seen_items:
                 continue
             seen_items.add(w)
@@ -300,7 +301,8 @@ async def ai_llm_run(input_data: str, age: int):
             "d_temp": labels["체온"],
             "d_i_label": labels["사진라벨"],
             "d_mile": milestone_result,
-            "d_content": final_diary.strip()
+            "d_content": final_diary.strip(),
+            "d_title" : merged_labels["제목"]
         }
 
     except Exception as e:

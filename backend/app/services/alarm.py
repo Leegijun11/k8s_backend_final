@@ -71,7 +71,7 @@ class Alarm_Service:
             db_data = await Alarm_Crud.crud_alarms_create(db, alarm=alarm_data)
 
             if receiver_group:
-                receiver_group.p_role = "공동 양육자"
+                receiver_group.p_role = "양육자"
                 receiver_group.p_category = p_category
                 receiver_group.p_state = "초대됨"
                 receiver_group.g_id = group_sender.g_id
@@ -79,7 +79,7 @@ class Alarm_Service:
             else:
                 from app.db.models.parents import Parent as ParentModel
                 new_partner = ParentModel(
-                    p_role="공동 양육자",
+                    p_role="양육자",
                     p_category=p_category,
                     p_state="초대됨",
                     g_id=group_sender.g_id,
@@ -116,7 +116,6 @@ class Alarm_Service:
 
             result = []
             for alarm in alarms:
-                # diary 타입은 send_id가 None이므로 sender 조회 스킵
                 if alarm.a_type == "diary":
                     result.append({
                         "a_id": alarm.a_id,
@@ -129,6 +128,14 @@ class Alarm_Service:
                     })
                 else:
                     sender = await User_Crud.crud_users_me(db, alarm.send_id)
+
+                    partner_q = select(Parent).where(
+                        Parent.u_id == alarm.receive_id,
+                        Parent.g_id == alarm.g_id
+                    )
+                    partner_result = await db.execute(partner_q)
+                    partner = partner_result.scalar_one_or_none()
+
                     result.append({
                         "a_id": alarm.a_id,
                         "a_type": alarm.a_type,
@@ -137,6 +144,7 @@ class Alarm_Service:
                         "receive_id": alarm.receive_id,
                         "g_id": alarm.g_id,
                         "a_created_at": alarm.a_created_at,
+                        "p_category": partner.p_category if partner else None, 
                     })
 
             return result

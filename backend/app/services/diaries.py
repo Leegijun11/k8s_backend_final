@@ -47,7 +47,7 @@ class Diary_Service:
                 d_i_label = llm_result.get("d_i_label", "")
 
                 clean_labels = [lbl.strip() for lbl in d_i_label.split(",")]
-                print(f"[clean_labels]: {clean_labels}")
+
                 d_image = diary.d_image 
 
                 if not d_image and images:
@@ -66,7 +66,7 @@ class Diary_Service:
                         d_image = "uploads/" + d_image.split("uploads/", 1)[1]
                 
                 diary_data = {
-                    "d_title": f"{diary.d_date.strftime('%Y-%m-%d')} ai 일기",
+                    "d_title": llm_result.get("d_title"),
                     "d_content": llm_result.get("d_content"),
                     "d_label": llm_result.get("d_label"),
                     "d_date": diary.d_date,
@@ -94,11 +94,11 @@ class Diary_Service:
                                 current_status = bool(ms_obj.get("status", False))
                                 break
                             
-                    print(m_name, age)
+
                     m_find = await Milestone_Crud.crud_milestones_find(db, m_name, age+2)
                     
                     if m_find is not None:
-                        print(m_find)
+
                         bm_find = await Milestone_Crud.crud_milestones_babymilestone_find(db, m_find, diary.b_id)
                         
                         bm_data = {
@@ -188,7 +188,7 @@ class Diary_Service:
                     d_image = "uploads/" + d_image.split("uploads/", 1)[1]
 
             diary_data = {
-                "d_title": f"{today.strftime('%Y-%m-%d')} ai 일기",
+                "d_title": llm_result.get("d_title"),
                 "d_content": llm_result.get("d_content"),
                 "d_label": llm_result.get("d_label"),
                 "d_date": today,

@@ -36,7 +36,7 @@ class Parent_Service:
 
             # 이미 '초대됨' 상태로 row가 생성되어 있다면 새로 add하지 않고 업데이트 처리
             if existing_parent:
-                existing_parent.p_role = parent.p_role or "공동 양육자"
+                existing_parent.p_role = parent.p_role or "양육자"
                 existing_parent.p_category = parent.p_category
                 existing_parent.p_state = "active"  # 수락했으므로 정식 활성화 상태로 전환!
                 existing_parent.g_id = parent.g_id

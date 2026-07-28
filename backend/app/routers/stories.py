@@ -36,6 +36,12 @@ async def router_stories_select_diaries(b_id: int, start_date:date, end_date:dat
     return await Story_Service.service_stories_diaries_select(db, b_id, start_date, end_date)
 
 
+# 디지털북 - 기간 내 달성 마일스톤 일기 미리보기 (← /{s_id} 보다 반드시 위에)
+@router.get('/achieved_milestones', response_model=list[Diary_Read])
+async def router_stories_achieved_milestones(b_id: int, start_date: date, end_date: date, db: AsyncSession = Depends(get_db)):
+    return await Story_Service.service_stories_achieved_milestones(db, b_id, start_date, end_date)
+
+
 # 디지털북 페이지 목록 (← /{s_id} 보다 위에)
 @router.get('/page/list/{s_id}', response_model=list[Story_Page_Read])
 async def router_stories_pages_list(s_id: int, db: AsyncSession = Depends(get_db)):

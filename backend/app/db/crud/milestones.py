@@ -126,6 +126,30 @@ class Milestone_Crud:
         result = await db.execute(query.order_by(Diary.d_date.desc()))
         return result.scalars().all()
 
+    # 베이비 마일스톤 기간내 달성된 일기 목록 (동화책 생성용 미리보기)
+    @staticmethod
+    async def crud_milestones_bm_achieved_list(db: AsyncSession, b_id: int, start_date: date, end_date: date):
+        achieved_result = await db.execute(
+            select(BabyMilestone.d_id)
+            .where(
+                BabyMilestone.b_id == b_id,
+                BabyMilestone.m_achieved == True,
+                BabyMilestone.d_id != None,
+                BabyMilestone.m_achieved_date.between(start_date, end_date)
+            )
+        )
+        achieved_d_ids = [row[0] for row in achieved_result.fetchall()]
+
+        if not achieved_d_ids:
+            return []
+
+        result = await db.execute(
+            select(Diary)
+            .where(Diary.d_id.in_(achieved_d_ids))
+            .order_by(Diary.d_date.desc())
+        )
+        return result.scalars().all()
+
     # 베이비 마일스톤 생성
     @staticmethod
     async def crud_milestones_babymilestone_create(db : AsyncSession, 

@@ -37,8 +37,8 @@ class BabyService:
                 existing_parent.current_b_id = db_baby.b_id
             else:
                 member_data = Parent_Create(
-                    p_role="parent",
-                    p_category="guardian",
+                    p_role="양육자",
+                    p_category="",
                     p_state="active",
                     g_id=g_id,
                     u_id=u_id,
