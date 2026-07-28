@@ -67,6 +67,6 @@ async def generate_daily_diaries():
 
 
 def start_scheduler():
-    scheduler.add_job(generate_daily_diaries, "cron", hour=16, minute=38)
+    scheduler.add_job(generate_daily_diaries, "cron", hour=13, minute=30)
     scheduler.start()
     print("[scheduler] 일기 자동 생성이 시작되었습니다.")
