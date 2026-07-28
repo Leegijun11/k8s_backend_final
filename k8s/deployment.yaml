@@ -20,7 +20,7 @@ spec:
         ports:
         - containerPort: 8000
         imagePullPolicy: Always
-        envFrom:  # ← 변경
+        envFrom:
         - secretRef:
             name: backend-secrets
 ---
@@ -44,7 +44,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: instance
+    alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:335667361860:certificate/7b5509e0-5fc0-4801-ad8a-c4bf067e48e6
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}, {"HTTP":80}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'
