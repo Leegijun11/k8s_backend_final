@@ -5,7 +5,7 @@ metadata:
   labels:
     app: dearbaby-backend
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: dearbaby-backend
@@ -16,13 +16,22 @@ spec:
     spec:
       containers:
       - name: dearbaby-backend-container
-        image: 335667361860.dkr.ecr.ap-northeast-2.amazonaws.com/dearbaby-backend:fd861c04de8a62be8bf967c8a1dd62aabdf1fae5
+        image: 335667361860.dkr.ecr.ap-northeast-2.amazonaws.com/dearbaby-backend:latest
         ports:
         - containerPort: 8000
         imagePullPolicy: Always
-        envFrom:
-        - secretRef:
-            name: backend-secrets
+        env:
+        - name: DB_HOST
+          value: "test-backend-db.c7iw6i0woh1k.ap-northeast-2.rds.amazonaws.com"
+        - name: DB_USER
+          value: "admin"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: db-password
+        - name: DB_NAME
+          value: "testdb"
 ---
 apiVersion: v1
 kind: Service
@@ -44,7 +53,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/target-type: instance
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:335667361860:certificate/7b5509e0-5fc0-4801-ad8a-c4bf067e48e6
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}, {"HTTP":80}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'
