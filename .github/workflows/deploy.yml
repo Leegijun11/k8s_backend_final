@@ -7,7 +7,7 @@ permissions:
   contents: write
 env:
   AWS_REGION: ap-northeast-2
-  ECR_REPOSITORY: dearbaby-backend
+  ECR_REPOSITORY: dearbabybackend
 jobs:
   deploy:
     runs-on: ubuntu-latest
