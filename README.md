@@ -21,7 +21,7 @@ AI가 아이의 성장 과정을 분석·기록하여, 매년 생일마다 "디�
 
 ## 배포 아키텍처
 
-![배포 아키텍처](./architecture.png)
+![배포 아키텍처](./architecture.PNG)
 
 - **Frontend 배포**: GitHub → GitHub Actions(CI Check) → 정적 빌드 결과물 S3 업로드 → CloudFront로 정적 자산 서빙
 - **Backend 배포**: GitHub → GitHub Actions(CI Check, Docker 빌드) → ECR 이미지 푸시 → ArgoCD가 변경 감지 후 EKS 클러스터에 자동 배포(GitOps)
@@ -61,7 +61,7 @@ AI가 아이의 성장 과정을 분석·기록하여, 매년 생일마다 "디�
 
 | 팀원 | 담당 |
 |---|---|
-| 이기준 | AI 파이프라인 연동, 또래 데이터 수집, 배포/인프라(CI/CD, EKS, GitOps) |
+| 이기준 | 또래 데이터 수집, 배포/인프라(CI/CD, EKS, GitOps) |
 | 강민구 | 아이 라벨 데이터 수집, LLM 에이전트 개발, 마일스톤 데이터 수집 |
 | 윤기은 | 아이 라벨 데이터 수집 & 전처리, AI 모델 파인튜닝 |
 | 이종훈 | 아이 라벨 데이터 수집 & 전처리, AI 모델 파인튜닝 |
